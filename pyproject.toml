@@ -1,0 +1,12 @@
+[project]
+name = "klonku-frontend"
+version = "0.1.0"
+description = "Standalone Flask frontend that replicates the approved Klonku design mocks."
+readme = "docs/implementation_plan.md"
+requires-python = ">=3.12"
+dependencies = [
+  "Flask>=3.0,<4.0",
+]
+
+[tool.uv]
+package = false

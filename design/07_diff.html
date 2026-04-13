@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku — Porovnání verzí</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+    --compare-red: #DC2626;
+    --compare-green: #15803D;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
+  .logo { display: flex; align-items: center; gap: 2px; text-decoration: none; }
+  .logo-text { font-family: 'Libre Baskerville', serif; font-weight: 700; font-size: 17px; color: var(--dark); letter-spacing: -0.02em; }
+  .logo-dot { width: 5px; height: 5px; background: var(--salmon); border-radius: 50%; margin-top: 5px; }
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--light);
+  }
+  .breadcrumb a { color: var(--mid); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--salmon); }
+  .breadcrumb svg { width: 10px; height: 10px; color: var(--salmon-mid); }
+  .breadcrumb .current { color: var(--dark); font-weight: 500; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--salmon); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+  }
+
+  .subheader {
+    background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 56px;
+    z-index: 40;
+  }
+  .subheader-left { display: flex; align-items: center; gap: 16px; }
+  .compare-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--salmon);
+  }
+  .compare-meta {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.45;
+  }
+  .view-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--salmon-light);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .view-tab {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--mid);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .view-tab.active {
+    background: white;
+    color: var(--salmon);
+    box-shadow: 0 1px 4px rgba(28,20,16,0.06);
+  }
+  .view-tab:hover:not(.active) { color: var(--dark); }
+  .btn-upload-sm {
+    font-size: 13px; font-weight: 500; padding: 7px 16px;
+    border-radius: 8px; border: none; cursor: pointer;
+    background: var(--salmon); color: white; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-upload-sm:hover { background: #C4512F; }
+
+  .diff-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    min-height: calc(100vh - 56px - 53px);
+  }
+
+  .diff-sidebar {
+    border-right: 1px solid var(--salmon-mid);
+    padding: 24px 20px;
+    background: #FFFDFC;
+    position: sticky;
+    top: 109px;
+    max-height: calc(100vh - 56px - 53px);
+    overflow-y: auto;
+  }
+  .summary-card,
+  .change-group {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .summary-card h3,
+  .change-group h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 14px;
+  }
+  .summary-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-box {
+    border-radius: 10px;
+    padding: 14px 12px;
+    background: var(--salmon-light);
+  }
+  .stat-box strong {
+    display: block;
+    font-size: 20px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-box span {
+    font-size: 11px;
+    color: var(--mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .stat-added strong { color: var(--compare-green); }
+  .stat-removed strong { color: var(--compare-red); }
+  .stat-fixed strong { color: var(--accent-green); }
+  .stat-open strong { color: var(--salmon); }
+
+  .change-item {
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(238,196,179,0.4);
+  }
+  .change-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .change-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .change-type.added { color: var(--compare-green); }
+  .change-type.removed { color: var(--compare-red); }
+  .change-type.updated { color: var(--salmon); }
+  .change-item p {
+    font-size: 13.5px;
+    color: var(--dark);
+    line-height: 1.55;
+    margin-bottom: 6px;
+  }
+  .change-item small {
+    font-size: 12px;
+    color: var(--light);
+  }
+
+  .diff-main {
+    padding: 32px;
+    overflow-y: auto;
+  }
+  .compare-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .compare-banner h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .compare-banner p {
+    font-size: 15px;
+    color: var(--mid);
+    line-height: 1.6;
+    max-width: 760px;
+  }
+  .version-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--salmon-light);
+    border: 1px solid var(--salmon-mid);
+    color: var(--mid);
+  }
+  .pill.current {
+    background: rgba(59,140,110,0.1);
+    border-color: rgba(59,140,110,0.16);
+    color: var(--accent-green);
+  }
+
+  .diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .doc-panel {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 3px 18px rgba(28,20,16,0.04);
+  }
+  .doc-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--salmon-mid);
+    background: #FFFDFC;
+  }
+  .doc-panel-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .doc-panel-header span {
+    font-size: 12px;
+    color: var(--light);
+  }
+  .doc-content {
+    padding: 24px 24px 28px;
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--dark);
+  }
+  .doc-content h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  .doc-content p { margin-bottom: 14px; }
+  .line {
+    display: block;
+    padding: 3px 0;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .line:last-child { margin-bottom: 0; }
+  .line.added {
+    background: rgba(21,128,61,0.10);
+    border-left: 3px solid var(--compare-green);
+    padding-left: 10px;
+  }
+  .line.removed {
+    background: rgba(220,38,38,0.08);
+    border-left: 3px solid var(--compare-red);
+    padding-left: 10px;
+  }
+  .line.updated {
+    background: rgba(217,95,59,0.10);
+    border-left: 3px solid var(--salmon);
+    padding-left: 10px;
+  }
+  .legend {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 18px;
+  }
+  .legend-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--salmon-mid);
+    background: white;
+    color: var(--mid);
+  }
+
+  @media (max-width: 1100px) {
+    .diff-layout { grid-template-columns: 1fr; }
+    .diff-sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--salmon-mid); }
+  }
+  @media (max-width: 900px) {
+    .diff-grid { grid-template-columns: 1fr; }
+    .navbar, .subheader { padding-left: 16px; padding-right: 16px; }
+    .subheader { align-items: flex-start; flex-direction: column; gap: 10px; }
+    .compare-banner { flex-direction: column; align-items: flex-start; }
+    .diff-main { padding: 20px; }
+  }
+  @media (min-width: 1500px) {
+    .diff-layout { grid-template-columns: 380px 1fr; }
+    .diff-main { padding: 36px 40px; }
+    .doc-content { padding: 28px 30px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="#" class="logo"><span class="logo-text">Klonku</span><span class="logo-dot"></span></a>
+    <div class="breadcrumb">
+      <a href="03_dashboard.html">Projekty</a>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <a href="04_project_detail.html">Analýza sentimentu</a>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="current">Porovnání verzí</span>
+    </div>
+  </div>
+  <div class="avatar">JN</div>
+</nav>
+
+<div class="subheader">
+  <div class="subheader-left">
+    <span class="compare-title">V3 vs V2</span>
+    <span class="compare-meta">Změny mezi poslední a předchozí verzí dokumentu</span>
+    <div class="view-tabs">
+      <button class="view-tab" onclick="location.href='06_results.html'">Výsledky</button>
+      <button class="view-tab active">Porovnání</button>
+    </div>
+  </div>
+  <button class="btn-upload-sm">Nahrát V4</button>
+</div>
+
+<div class="diff-layout">
+  <aside class="diff-sidebar">
+    <div class="summary-card">
+      <h3>Souhrn změn</h3>
+      <div class="summary-stats">
+        <div class="stat-box stat-added">
+          <strong>14</strong>
+          <span>Přidaných bloků</span>
+        </div>
+        <div class="stat-box stat-removed">
+          <strong>3</strong>
+          <span>Odebraných bloků</span>
+        </div>
+        <div class="stat-box stat-fixed">
+          <strong>5</strong>
+          <span>Opravených chyb</span>
+        </div>
+        <div class="stat-box stat-open">
+          <strong>7</strong>
+          <span>Stále otevřených</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="change-group">
+      <h3>Klíčové rozdíly</h3>
+      <div class="change-item">
+        <span class="change-type added">Přidáno</span>
+        <p>Byla doplněna metodická část k výběru datasetu a jeho čištění.</p>
+        <small>Kapitola 3.1, řádky 88–112</small>
+      </div>
+      <div class="change-item">
+        <span class="change-type updated">Upraveno</span>
+        <p>Citace zdroje [12] byla rozšířena o rok vydání a úplný název publikace.</p>
+        <small>Úvod, řádek 26</small>
+      </div>
+      <div class="change-item">
+        <span class="change-type removed">Odebráno</span>
+        <p>Bylo odstraněno nejednoznačné tvrzení o dominanci BERT modelů bez zdroje.</p>
+        <small>Kapitola 2.1, řádek 54</small>
+      </div>
+      <div class="change-item">
+        <span class="change-type updated">Upraveno</span>
+        <p>Zpřesněna formulace výsledků experimentu a metriky F1-skóre.</p>
+        <small>Kapitola 3.4, řádky 142–150</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="diff-main">
+    <div class="compare-banner">
+      <div>
+        <h1>Porovnání verzí dokumentu</h1>
+        <p>Vizualizace změn mezi verzemi slouží pro rychlé ověření, co student skutečně doplnil, zpřesnil nebo odstranil po předchozí analýze.</p>
+      </div>
+      <div class="version-pills">
+        <span class="pill">V2 • 31. 3. 2026</span>
+        <span class="pill current">V3 • 2. 4. 2026</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-chip">Zeleně: nové pasáže</span>
+      <span class="legend-chip">Červeně: odstraněné pasáže</span>
+      <span class="legend-chip">Lososově: upravené formulace</span>
+    </div>
+
+    <div class="diff-grid">
+      <section class="doc-panel">
+        <div class="doc-panel-header">
+          <h2>Verze V2</h2>
+          <span>Před úpravami</span>
+        </div>
+        <div class="doc-content">
+          <h3>3. Praktická část</h3>
+          <p>
+            <span class="line">Na základě teoretické analýzy jsme zvolili přístup založený na doladění modelu Czech BERT.</span>
+            <span class="line removed">Dataset byl sestaven z veřejně dostupných příspěvků bez bližší specifikace filtrace.</span>
+            <span class="line">Model byl následně evaluován na oddělené testovací sadě.</span>
+            <span class="line updated">Přesnost modelu dosáhla F1-skóre 0.847, což je srovnatelné s publikovanými výsledky.</span>
+          </p>
+          <h3>2.1 Strojové učení v NLP</h3>
+          <p>
+            <span class="line removed">Dominují transformer modely, především BERT a jeho varianty.</span>
+            <span class="line">Předtrénované jazykové modely umožňují transfer learning pro specifické úlohy.</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="doc-panel">
+        <div class="doc-panel-header">
+          <h2>Verze V3</h2>
+          <span>Po úpravách</span>
+        </div>
+        <div class="doc-content">
+          <h3>3. Praktická část</h3>
+          <p>
+            <span class="line">Na základě teoretické analýzy jsme zvolili přístup založený na doladění modelu Czech BERT.</span>
+            <span class="line added">Dataset byl sestaven z 15 000 česky psaných příspěvků a před trénováním prošel deduplikací a základním čištěním.</span>
+            <span class="line added">Byla odstraněna reklamní sdělení, duplicitní příspěvky a jazykově nejednoznačné vzorky.</span>
+            <span class="line">Model byl následně evaluován na oddělené testovací sadě.</span>
+            <span class="line updated">Výsledný model dosáhl na testovací sadě F1-skóre 0,847, což odpovídá hodnotám uváděným ve srovnatelných studiích.</span>
+          </p>
+          <h3>2.1 Strojové učení v NLP</h3>
+          <p>
+            <span class="line added">V posledních letech převažují přístupy založené na transformerech, jejichž efektivita je podložena více recentními studiemi.</span>
+            <span class="line">Předtrénované jazykové modely umožňují transfer learning pro specifické úlohy.</span>
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

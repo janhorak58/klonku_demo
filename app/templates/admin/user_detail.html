@@ -1,0 +1,58 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Detail uživatele{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+      <p>Úprava role, tarifu a měsíčního limitu skenování.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <form method="post" class="stack-form">
+      <input type="hidden" name="action" value="save">
+      <div class="field-grid">
+        <div class="field"><label>E-mail</label><div class="field-value">{{ user.email }}</div></div>
+        <div class="field"><label>Ověřený e-mail</label><div class="field-value">{{ 'Ano' if user.email_verified else 'Ne' }}</div></div>
+        <div class="field">
+          <label for="role">Role</label>
+          <select name="role" id="role" class="input">
+            <option value="student" {% if user.role == 'student' %}selected{% endif %}>student</option>
+            <option value="superadmin" {% if user.role == 'superadmin' %}selected{% endif %}>superadmin</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tier">Tier</label>
+          <select name="tier" id="tier" class="input">
+            {% for tier in ['unverified', 'institutional_free', 'basic', 'pro'] %}
+            <option value="{{ tier }}" {% if user.tier == tier %}selected{% endif %}>{{ tier }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="monthly_scan_budget">Měsíční limit skenů</label>
+          <input class="input" type="number" min="0" name="monthly_scan_budget" id="monthly_scan_budget" value="{{ user.monthly_scan_budget }}">
+        </div>
+        <div class="field">
+          <label>Využití</label>
+          <div class="field-value">{{ usage.used }} / {{ usage.budget }} ({{ usage.percent }} %)</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <a href="{{ url_for('admin.users') }}" class="btn-secondary">Zpět</a>
+        <button type="submit" class="btn-primary">Uložit změny</button>
+      </div>
+    </form>
+    <form method="post" class="danger-zone">
+      <input type="hidden" name="action" value="delete">
+      <div>
+        <h3>Odstranit uživatele</h3>
+        <p>Smaže uživatele i jeho projekty z běžící mock instance.</p>
+      </div>
+      <button type="submit" class="btn-secondary">Smazat uživatele</button>
+    </form>
+  </div>
+</main>
+{% endblock %}

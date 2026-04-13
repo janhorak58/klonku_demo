@@ -1,0 +1,113 @@
+{% extends 'layouts/app.html' %}
+
+{% set active_nav = 'profile' %}
+{% block title %}Klonku — Profil{% endblock %}
+
+{% block app_content %}
+<main class="main">
+  <form method="post">
+    <div class="page-header split">
+      <div>
+        <h1>Můj profil</h1>
+        <p>Správa účtu, limitů a preferencí notifikací v jednotném rozhraní.</p>
+      </div>
+      <button class="btn-primary" type="submit">Uložit změny</button>
+    </div>
+
+    <div class="profile-layout">
+      <aside class="profile-side">
+        <div class="profile-hero">
+          <div class="hero-avatar">{{ user.first_name[0] }}{{ user.last_name[0] }}</div>
+          <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+          <p>Student {{ user.faculty_name }}</p>
+        </div>
+        <div class="side-meta">
+          <div class="meta-row"><span>E-mail</span><strong>{{ user.email }}</strong></div>
+          <div class="meta-row"><span>Fakulta</span><strong>{{ user.faculty_label }}</strong></div>
+          <div class="meta-row"><span>Tarif</span><strong>{{ tier_label }}</strong></div>
+          <div class="meta-row"><span>Aktivní od</span><strong>{{ user.joined_at }}</strong></div>
+        </div>
+        <div class="usage-card">
+          <h3>Měsíční limit skenování</h3>
+          <div class="usage-bar"><div class="usage-bar-fill" style="width: {{ usage.percent }}%"></div></div>
+          <p>Využito {{ usage.used }} z {{ usage.budget }} kontrol. Další obnova limitu proběhne {{ usage.renewal_date }}.</p>
+        </div>
+      </aside>
+
+      <div class="content-stack">
+        <section class="content-card">
+          <div class="card-header">
+            <div>
+              <h3>Účet</h3>
+              <p>Základní identifikační údaje uživatele</p>
+            </div>
+            <a href="{{ url_for('auth.reset_password') }}" class="btn-link">Změnit heslo</a>
+          </div>
+          <div class="field-grid">
+            <div class="field"><label>Jméno</label><div class="field-value">{{ user.first_name }}</div></div>
+            <div class="field"><label>Příjmení</label><div class="field-value">{{ user.last_name }}</div></div>
+            <div class="field wide"><label>E-mail</label><div class="field-value">{{ user.email }}</div></div>
+            <div class="field"><label>Škola</label><div class="field-value">{{ user.university_name }}</div></div>
+            <div class="field"><label>Fakulta</label><div class="field-value">{{ user.faculty_name }}</div></div>
+          </div>
+        </section>
+
+        <section class="content-card">
+          <div class="card-header">
+            <div>
+              <h3>Tarif a limity</h3>
+              <p>Stav předplatného a dostupné funkce</p>
+            </div>
+            <a href="#" class="btn-link">Porovnat tarify</a>
+          </div>
+          <div class="plan-card">
+            <div class="plan-box current">
+              <h4>Akademický Free</h4>
+              <p>Vhodné pro první kontrolu bakalářské nebo diplomové práce. Omezený počet skenů a částečný náhled výsledků.</p>
+              <div class="feature-list">
+                <span class="feature-chip">5 skenů / měsíc</span>
+                <span class="feature-chip">Základní výsledky</span>
+                <span class="feature-chip">1 aktivní projekt</span>
+                <span class="feature-chip">Export bez PDF</span>
+              </div>
+            </div>
+            <div class="plan-box">
+              <h4>Akademický Pro</h4>
+              <p>Bez limitu aktivních projektů, plné návrhy oprav a kompletní historie porovnání verzí.</p>
+              <div class="feature-list">
+                <span class="feature-chip">Neomezené projekty</span>
+                <span class="feature-chip">Detailní diff</span>
+                <span class="feature-chip">Všechny chyby</span>
+                <span class="feature-chip">PDF export</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-card">
+          <div class="card-header">
+            <div>
+              <h3>Notifikace</h3>
+              <p>Volby pro upozornění a systémové e-maily</p>
+            </div>
+          </div>
+          <div class="prefs-list">
+            <label class="pref-row">
+              <div class="pref-text"><strong>Dokončení analýzy</strong><span>Poslat e-mail po dokončení skenu dokumentu.</span></div>
+              <span class="toggle-wrap"><input type="checkbox" name="analysis_complete" {% if user.notifications.analysis_complete %}checked{% endif %}><span class="toggle-ui"></span></span>
+            </label>
+            <label class="pref-row">
+              <div class="pref-text"><strong>Připomenutí nedokončeného projektu</strong><span>Upozornit po 7 dnech bez nahrání nové verze práce.</span></div>
+              <span class="toggle-wrap"><input type="checkbox" name="project_reminder" {% if user.notifications.project_reminder %}checked{% endif %}><span class="toggle-ui"></span></span>
+            </label>
+            <label class="pref-row">
+              <div class="pref-text"><strong>Produktové novinky</strong><span>Posílat informace o nových kontrolách a změnách v tarifech.</span></div>
+              <span class="toggle-wrap"><input type="checkbox" name="product_news" {% if user.notifications.product_news %}checked{% endif %}><span class="toggle-ui"></span></span>
+            </label>
+          </div>
+        </section>
+      </div>
+    </div>
+  </form>
+</main>
+{% endblock %}

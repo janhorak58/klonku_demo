@@ -1,0 +1,86 @@
+{% macro logo(href='#', size='default') -%}
+<a href="{{ href }}" class="logo {% if size == 'small' %}logo-small{% endif %}">
+  <span class="logo-text">Klonku</span>
+  <span class="logo-dot"></span>
+</a>
+{%- endmacro %}
+
+{% macro tier_badge(tier) -%}
+{% set labels = {
+  'institutional_free': 'Akademický tarif Free',
+  'basic': 'Basic',
+  'pro': 'Pro',
+  'unverified': 'Neověřeno'
+} %}
+<span class="tier-badge tier-{{ tier|replace('_', '-') }}">{{ labels.get(tier, tier) }}</span>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+{% set labels = {
+  'pending': 'Čeká na nahrání',
+  'processing': 'Probíhá analýza…',
+  'completed': 'Dokončeno',
+  'partial': 'Částečně',
+  'failed': 'Chyba',
+  'conversion_failed': 'Nelze převést'
+} %}
+<span class="status-badge status-{{ status }}">{{ labels.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro app_navbar(user, active='projects') -%}
+<nav class="navbar">
+  <div class="nav-left">
+    {{ logo(url_for('projects.dashboard')) }}
+    <div class="nav-links">
+      <a href="{{ url_for('projects.dashboard') }}" class="nav-link {% if active == 'projects' %}active{% endif %}">Projekty</a>
+      <a href="{{ url_for('profile.index') }}" class="nav-link {% if active == 'profile' %}active{% endif %}">Profil</a>
+      {% if user.role == 'superadmin' %}
+      <a href="{{ url_for('admin.overview') }}" class="nav-link {% if active == 'admin' %}active{% endif %}">Admin</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="nav-right">
+    {% if user.role != 'superadmin' %}
+    {{ tier_badge(user.tier) }}
+    <div class="usage-mini">
+      <div class="usage-bar-mini">
+        <div class="usage-bar-mini-fill" style="width: {{ (user.monthly_scan_count / (user.monthly_scan_budget or 1) * 100)|round(0) }}%"></div>
+      </div>
+      {{ user.monthly_scan_count }} / {{ user.monthly_scan_budget }} skenů
+    </div>
+    {% else %}
+    <span class="admin-badge">Admin</span>
+    {% endif %}
+    <div class="avatar">{{ user.first_name[0] }}{{ user.last_name[0] }}</div>
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <button type="submit" class="btn-ghost">Odhlásit se</button>
+    </form>
+  </div>
+</nav>
+{%- endmacro %}
+
+{% macro admin_navbar(user) -%}
+<nav class="navbar admin-navbar">
+  <div class="nav-left">
+    {{ logo(url_for('admin.overview')) }}
+    <span class="admin-badge">Admin</span>
+  </div>
+  <div class="nav-right">
+    <div class="status-dot"></div>
+    <span class="admin-user">Systém online • {{ user.first_name }} {{ user.last_name }}</span>
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <button type="submit" class="btn-ghost">Odhlásit se</button>
+    </form>
+  </div>
+</nav>
+{%- endmacro %}
+
+{% macro flash_messages(messages) -%}
+{% if messages %}
+<div class="flash-stack">
+  {% for category, message in messages %}
+  <div class="flash flash-{{ category }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+{%- endmacro %}

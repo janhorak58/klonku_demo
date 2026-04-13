@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku — Detail projektu</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAVBAR (same as dashboard) ── */
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 64px; background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .nav-left { display: flex; align-items: center; gap: 32px; }
+  .logo { display: flex; align-items: center; gap: 2px; text-decoration: none; }
+  .logo-text { font-family: 'Libre Baskerville', serif; font-weight: 700; font-size: 19px; color: var(--dark); letter-spacing: -0.02em; }
+  .logo-dot { width: 6px; height: 6px; background: var(--salmon); border-radius: 50%; margin-top: 6px; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link { font-size: 14px; font-weight: 500; color: var(--mid); text-decoration: none; padding: 8px 14px; border-radius: 8px; transition: all 0.15s; }
+  .nav-link:hover { background: var(--salmon-light); color: var(--dark); }
+  .nav-link.active { background: var(--salmon-light); color: var(--salmon); }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--salmon); color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* ── MAIN ── */
+  .main { max-width: 900px; margin: 0 auto; padding: 32px 40px 80px; }
+
+  /* breadcrumb */
+  .breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--light); margin-bottom: 24px;
+  }
+  .breadcrumb a { color: var(--mid); text-decoration: none; transition: color 0.15s; }
+  .breadcrumb a:hover { color: var(--salmon); }
+  .breadcrumb svg { width: 12px; height: 12px; color: var(--salmon-mid); }
+  .breadcrumb .current { color: var(--dark); font-weight: 500; }
+
+  /* project header */
+  .project-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 12px; gap: 20px;
+  }
+  .project-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; font-weight: 600; color: var(--dark);
+    line-height: 1.3;
+  }
+
+  .project-meta {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 32px;
+  }
+  .meta-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; color: var(--mid); font-weight: 400;
+    padding: 4px 12px; background: white; border: 1px solid var(--salmon-mid);
+    border-radius: 20px;
+  }
+  .meta-chip svg { width: 14px; height: 14px; color: var(--light); }
+
+  .btn-upload {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; background: var(--salmon); border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: white;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-upload:hover { background: #C4512F; box-shadow: 0 4px 16px rgba(217,95,59,0.25); transform: translateY(-1px); }
+  .btn-upload svg { width: 16px; height: 16px; }
+
+  /* pipeline config banner */
+  .pipeline-banner {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pipeline-banner-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .pipeline-banner-left .label {
+    font-size: 12px; font-weight: 500; color: var(--light);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .pipeline-chips {
+    display: flex; flex-wrap: wrap; gap: 5px;
+  }
+  .p-chip {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 16px; background: var(--salmon-light);
+    color: var(--mid); border: 1px solid var(--salmon-mid);
+  }
+  .pipeline-edit-btn {
+    font-size: 13px; color: var(--salmon); font-weight: 500;
+    text-decoration: none; cursor: pointer; transition: color 0.15s;
+    background: none; border: none; font-family: inherit;
+  }
+  .pipeline-edit-btn:hover { color: #C4512F; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* section divider */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 600; color: var(--dark);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600;
+    background: var(--salmon-light); color: var(--salmon);
+    padding: 2px 8px; border-radius: 10px;
+  }
+
+  /* ── VERSION LIST ── */
+  .version-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .version-row {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.2s;
+  }
+  .version-row:hover {
+    border-color: var(--salmon);
+    box-shadow: 0 2px 12px rgba(28,20,16,0.05);
+  }
+
+  .version-num {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--salmon); min-width: 48px;
+  }
+
+  .version-info { flex: 1; }
+  .version-date {
+    font-size: 13px; color: var(--light); margin-bottom: 4px;
+  }
+  .version-stats {
+    display: flex; gap: 16px; font-size: 13px; color: var(--mid);
+  }
+  .version-stats strong { color: var(--dark); font-weight: 600; }
+  .version-stats .resolved { color: var(--accent-green); }
+
+  .status-badge {
+    font-size: 11px; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px; white-space: nowrap;
+  }
+  .status-completed { background: rgba(59,140,110,0.1); color: var(--accent-green); }
+  .status-processing { background: rgba(217,95,59,0.08); color: var(--salmon); }
+  .status-partial { background: rgba(217,119,6,0.08); color: #D97706; }
+  .status-failed { background: rgba(220,38,38,0.08); color: #DC2626; }
+
+  .version-actions {
+    display: flex; gap: 8px;
+  }
+  .btn-sm {
+    font-size: 13px; font-weight: 500; padding: 7px 14px;
+    border-radius: 8px; border: 1px solid var(--salmon-mid);
+    background: white; color: var(--mid); cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; text-decoration: none;
+  }
+  .btn-sm:hover { border-color: var(--salmon); color: var(--salmon); background: #FFFCFA; }
+  .btn-sm-primary {
+    background: var(--salmon); color: white; border-color: var(--salmon);
+  }
+  .btn-sm-primary:hover { background: #C4512F; color: white; }
+
+  /* timeline connector */
+  .version-row { position: relative; }
+  .version-row::before {
+    content: '';
+    position: absolute;
+    left: 44px; top: -12px;
+    width: 2px; height: 12px;
+    background: var(--salmon-mid);
+  }
+  .version-row:first-child::before { display: none; }
+
+  /* animations */
+  .version-row {
+    opacity: 0; transform: translateY(12px);
+    animation: reveal 0.4s ease forwards;
+  }
+  .version-row:nth-child(1) { animation-delay: 0.05s; }
+  .version-row:nth-child(2) { animation-delay: 0.1s; }
+  .version-row:nth-child(3) { animation-delay: 0.15s; }
+
+  @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 700px) {
+    .navbar { padding: 0 20px; }
+    .main { padding: 24px 20px; }
+    .version-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .version-actions { width: 100%; }
+    .btn-sm { flex: 1; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="#" class="logo"><span class="logo-text">Klonku</span><span class="logo-dot"></span></a>
+    <div class="nav-links">
+      <a href="03_dashboard.html" class="nav-link active">Projekty</a>
+      <a href="#" class="nav-link">Profil</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="avatar">JN</div>
+  </div>
+</nav>
+
+<div class="main">
+
+  <div class="breadcrumb">
+    <a href="03_dashboard.html">Projekty</a>
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    <span class="current">Analýza sentimentu v sociálních sítích</span>
+  </div>
+
+  <div class="project-header">
+    <h1>Analýza sentimentu v sociálních sítích</h1>
+    <button class="btn-upload">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0-16l-4 4m4-4l4 4"/>
+      </svg>
+      Nahrát novou verzi
+    </button>
+  </div>
+
+  <div class="project-meta">
+    <span class="meta-chip">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      FM
+    </span>
+    <span class="meta-chip">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      DOCX
+    </span>
+    <span class="meta-chip">Vytvořeno 28. 3. 2026</span>
+  </div>
+
+  <div class="pipeline-banner">
+    <div class="pipeline-banner-left">
+      <span class="label">Kontroly:</span>
+      <div class="pipeline-chips">
+        <span class="p-chip">Chybějící části</span>
+        <span class="p-chip">Citace</span>
+        <span class="p-chip">Typografie</span>
+        <span class="p-chip">Jazyk</span>
+      </div>
+    </div>
+    <button class="pipeline-edit-btn">Upravit</button>
+  </div>
+
+  <div class="section-title">
+    Verze dokumentu
+    <span class="count">3</span>
+  </div>
+
+  <div class="version-list">
+
+    <!-- Version 3 (latest) -->
+    <div class="version-row">
+      <div class="version-num">V3</div>
+      <div class="version-info">
+        <div class="version-date">2. 4. 2026, 14:22</div>
+        <div class="version-stats">
+          <span><strong>7</strong> chyb</span>
+          <span class="resolved"><strong>5</strong> opravených od V2</span>
+        </div>
+      </div>
+      <span class="status-badge status-completed">Dokončeno</span>
+      <div class="version-actions">
+        <a href="07_diff.html" class="btn-sm">Rozdíl oproti V2</a>
+        <a href="06_results.html" class="btn-sm btn-sm-primary">Výsledky</a>
+      </div>
+    </div>
+
+    <!-- Version 2 -->
+    <div class="version-row">
+      <div class="version-num">V2</div>
+      <div class="version-info">
+        <div class="version-date">31. 3. 2026, 09:15</div>
+        <div class="version-stats">
+          <span><strong>12</strong> chyb</span>
+          <span class="resolved"><strong>8</strong> opravených od V1</span>
+        </div>
+      </div>
+      <span class="status-badge status-completed">Dokončeno</span>
+      <div class="version-actions">
+        <a href="#" class="btn-sm">Rozdíl oproti V1</a>
+        <a href="#" class="btn-sm btn-sm-primary">Výsledky</a>
+      </div>
+    </div>
+
+    <!-- Version 1 -->
+    <div class="version-row">
+      <div class="version-num">V1</div>
+      <div class="version-info">
+        <div class="version-date">28. 3. 2026, 16:40</div>
+        <div class="version-stats">
+          <span><strong>20</strong> chyb</span>
+        </div>
+      </div>
+      <span class="status-badge status-completed">Dokončeno</span>
+      <div class="version-actions">
+        <a href="#" class="btn-sm btn-sm-primary">Výsledky</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

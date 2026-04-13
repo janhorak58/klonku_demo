@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku — Přehled projektů</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+    background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+  }
+  .logo-text {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--dark);
+    letter-spacing: -0.02em;
+  }
+  .logo-dot {
+    width: 6px; height: 6px;
+    background: var(--salmon);
+    border-radius: 50%;
+    margin-top: 6px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mid);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .nav-link:hover { background: var(--salmon-light); color: var(--dark); }
+  .nav-link.active { background: var(--salmon-light); color: var(--salmon); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .tier-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .tier-free {
+    background: rgba(59,140,110,0.1);
+    color: var(--accent-green);
+  }
+
+  .usage-mini {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--mid);
+    font-weight: 400;
+  }
+  .usage-bar-mini {
+    width: 60px;
+    height: 4px;
+    background: var(--salmon-mid);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .usage-bar-mini-fill {
+    height: 100%;
+    width: 60%;
+    background: var(--accent-green);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--salmon);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+  }
+  .avatar:hover { box-shadow: 0 0 0 3px var(--salmon-light); }
+
+  /* ── MAIN ── */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .page-header-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+  .page-header-text p {
+    font-size: 15px;
+    color: var(--mid);
+    font-weight: 300;
+  }
+
+  .btn-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    background: var(--salmon);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-new:hover {
+    background: #C4512F;
+    box-shadow: 0 4px 16px rgba(217,95,59,0.25);
+    transform: translateY(-1px);
+  }
+  .btn-new svg { width: 16px; height: 16px; }
+
+  /* ── PROJECT GRID ── */
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+  }
+
+  .project-card {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 14px;
+    padding: 24px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--salmon-mid);
+    transition: background 0.2s;
+  }
+  .project-card:hover {
+    border-color: var(--salmon);
+    box-shadow: 0 4px 20px rgba(28,20,16,0.06);
+    transform: translateY(-2px);
+  }
+  .project-card:hover::before {
+    background: var(--salmon);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--dark);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--light);
+    font-weight: 400;
+  }
+  .card-meta .dot { color: var(--salmon-mid); }
+
+  .status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .status-completed { background: rgba(59,140,110,0.1); color: var(--accent-green); }
+  .status-processing { background: rgba(217,95,59,0.08); color: var(--salmon); animation: pulse-badge 2s ease-in-out infinite; }
+  .status-pending { background: #F3F0ED; color: var(--light); }
+  .status-failed { background: rgba(220,38,38,0.08); color: #DC2626; }
+
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(238,196,179,0.4);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--light);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .card-date {
+    font-size: 12px;
+    color: var(--light);
+    margin-top: 12px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--mid);
+  }
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: var(--salmon-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .empty-icon svg { width: 36px; height: 36px; color: var(--salmon-mid); }
+  .empty-state h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+  .empty-state p {
+    font-size: 14px;
+    color: var(--light);
+    margin-bottom: 24px;
+  }
+
+  /* animations */
+  .project-card {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal 0.4s ease forwards;
+  }
+  .project-card:nth-child(1) { animation-delay: 0.05s; }
+  .project-card:nth-child(2) { animation-delay: 0.1s; }
+  .project-card:nth-child(3) { animation-delay: 0.15s; }
+  .project-card:nth-child(4) { animation-delay: 0.2s; }
+  .project-card:nth-child(5) { animation-delay: 0.25s; }
+
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 700px) {
+    .navbar { padding: 0 20px; }
+    .main { padding: 24px 20px; }
+    .project-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .usage-mini { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="#" class="logo">
+      <span class="logo-text">Klonku</span>
+      <span class="logo-dot"></span>
+    </a>
+    <div class="nav-links">
+      <a href="#" class="nav-link active">Projekty</a>
+      <a href="#" class="nav-link">Profil</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="tier-badge tier-free">Akademický tarif Free</span>
+    <div class="usage-mini">
+      <div class="usage-bar-mini"><div class="usage-bar-mini-fill"></div></div>
+      3 / 5 skenů
+    </div>
+    <div class="avatar">JN</div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <div class="page-header">
+    <div class="page-header-text">
+      <h1>Moje projekty</h1>
+      <p>Spravuj své bakalářské a diplomové práce.</p>
+    </div>
+    <button class="btn-new">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nový projekt
+    </button>
+  </div>
+
+  <div class="project-grid">
+
+    <!-- Card 1: completed -->
+    <div class="project-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">Analýza sentimentu v sociálních sítích</div>
+          <div class="card-meta">
+            <span>FM</span>
+            <span class="dot">&middot;</span>
+            <span>DOCX</span>
+            <span class="dot">&middot;</span>
+            <span>Bakalářská práce</span>
+          </div>
+        </div>
+        <span class="status-badge status-completed">Dokončeno</span>
+      </div>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="stat-value">3</span>
+          <span class="stat-label">Verze</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">12</span>
+          <span class="stat-label">Chyb</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" style="color: var(--accent-green);">5</span>
+          <span class="stat-label">Opravených</span>
+        </div>
+      </div>
+      <div class="card-date">Poslední aktivita: 31. 3. 2026</div>
+    </div>
+
+    <!-- Card 2: processing -->
+    <div class="project-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">Optimalizace logistických řetězců</div>
+          <div class="card-meta">
+            <span>FE</span>
+            <span class="dot">&middot;</span>
+            <span>LaTeX</span>
+            <span class="dot">&middot;</span>
+            <span>Diplomová práce</span>
+          </div>
+        </div>
+        <span class="status-badge status-processing">Probíhá analýza&hellip;</span>
+      </div>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="stat-value">1</span>
+          <span class="stat-label">Verze</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">&mdash;</span>
+          <span class="stat-label">Chyb</span>
+        </div>
+      </div>
+      <div class="card-date">Nahráno: 2. 4. 2026</div>
+    </div>
+
+    <!-- Card 3: waiting -->
+    <div class="project-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">Vliv sociálních médií na nákupní chování generace Z</div>
+          <div class="card-meta">
+            <span>FP</span>
+            <span class="dot">&middot;</span>
+            <span>DOCX</span>
+            <span class="dot">&middot;</span>
+            <span>Bakalářská práce</span>
+          </div>
+        </div>
+        <span class="status-badge status-pending">Čeká na nahrání</span>
+      </div>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="stat-value">0</span>
+          <span class="stat-label">Verzí</span>
+        </div>
+      </div>
+      <div class="card-date">Vytvořeno: 1. 4. 2026</div>
+    </div>
+
+    <!-- Card 4: completed -->
+    <div class="project-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">Návrh informačního systému pro malý podnik</div>
+          <div class="card-meta">
+            <span>FM</span>
+            <span class="dot">&middot;</span>
+            <span>DOCX</span>
+            <span class="dot">&middot;</span>
+            <span>Bakalářská práce</span>
+          </div>
+        </div>
+        <span class="status-badge status-completed">Dokončeno</span>
+      </div>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="stat-value">5</span>
+          <span class="stat-label">Verzí</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">24</span>
+          <span class="stat-label">Chyb</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" style="color: var(--accent-green);">19</span>
+          <span class="stat-label">Opravených</span>
+        </div>
+      </div>
+      <div class="card-date">Poslední aktivita: 28. 3. 2026</div>
+    </div>
+
+    <!-- Card 5: failed -->
+    <div class="project-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">Srovnání účetní legislativy ČR a Německa</div>
+          <div class="card-meta">
+            <span>FE</span>
+            <span class="dot">&middot;</span>
+            <span>DOCX</span>
+            <span class="dot">&middot;</span>
+            <span>Diplomová práce</span>
+          </div>
+        </div>
+        <span class="status-badge status-failed">Chyba</span>
+      </div>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="stat-value">2</span>
+          <span class="stat-label">Verze</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">8</span>
+          <span class="stat-label">Chyb</span>
+        </div>
+      </div>
+      <div class="card-date">Poslední aktivita: 29. 3. 2026</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

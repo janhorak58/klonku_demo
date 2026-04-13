@@ -1,0 +1,82 @@
+{% extends 'layouts/app.html' %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Výsledky analýzy{% endblock %}
+
+{% block app_content %}
+<div class="results-navbar-spacer"></div>
+<div class="results-subheader">
+  <div class="subheader-left">
+    <div class="breadcrumb compact">
+      <a href="{{ url_for('projects.dashboard') }}">Projekty</a>
+      <span>›</span>
+      <a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.title }}</a>
+      <span>›</span>
+      <span class="current">V{{ version.version_number }}</span>
+    </div>
+    <span class="version-label">V{{ version.version_number }}</span>
+    <span class="error-count"><strong>{{ all_errors|length }}</strong> chyb nalezeno</span>
+  </div>
+  <div class="view-tabs">
+    <a href="{{ url_for('projects.results', project_id=project.id, version_id=version.id) }}" class="view-tab active">Výsledky</a>
+    {% if version.has_diff %}
+    <a href="{{ url_for('projects.diff', project_id=project.id, version_id=version.id) }}" class="view-tab">Rozdíl oproti V{{ version.version_number - 1 }}</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="results-layout">
+  <div class="markdown-pane">
+    <div class="md-content">
+      {{ document_html|safe }}
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Nalezené chyby</span>
+    </div>
+    <div class="filter-bar" id="results-filters">
+      <button class="filter-chip active" data-filter="all">Všechny ({{ all_errors|length }})</button>
+      {% for severity in ['critical', 'high', 'medium', 'low'] %}
+      {% set count = all_errors|selectattr('severity', 'equalto', severity)|list|length %}
+      {% if count %}
+      <button class="filter-chip" data-filter="{{ severity }}">{{ severity|capitalize }} ({{ count }})</button>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% for error in visible_errors %}
+    <div class="error-card {% if loop.first %}active{% endif %}" data-error="{{ error.id }}" data-severity="{{ error.severity }}">
+      <div class="error-card-top">
+        <span class="error-type">{{ error.type }}</span>
+        <span class="sev-badge sev-{{ error.severity }}">{{ error.severity }}</span>
+      </div>
+      <p class="error-desc">{{ error.description }}</p>
+      {% if user_tier == 'pro' or user_tier == 'basic' %}
+      <div class="error-fix">
+        <div class="error-fix-label">Návrh opravy</div>
+        {{ error.suggested_fix }}
+      </div>
+      {% endif %}
+      <div class="error-links">
+        <div class="error-goto">Přejít na místo v textu</div>
+        <a href="{{ url_for('projects.error_detail', error_id=error.id) }}" class="btn-link">Detail chyby</a>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if hidden_count %}
+    <div class="teaser-card">
+      <div class="teaser-lock">🔒</div>
+      <h4>+ {{ hidden_count }} další chyby skryté</h4>
+      <p>Přejdi na Pro a odhal všechny chyby včetně návrhů oprav bez nutnosti nového skenování.</p>
+      <button class="btn-primary btn-full">Upgradovat na Pro</button>
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+{% endblock %}

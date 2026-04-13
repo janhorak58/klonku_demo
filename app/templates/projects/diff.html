@@ -1,0 +1,78 @@
+{% extends 'layouts/app.html' %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Porovnání verzí{% endblock %}
+
+{% block app_content %}
+<div class="results-subheader">
+  <div class="subheader-left">
+    <div class="breadcrumb compact">
+      <a href="{{ url_for('projects.dashboard') }}">Projekty</a>
+      <span>›</span>
+      <a href="{{ url_for('projects.project_detail', project_id=project.id) }}">{{ project.title }}</a>
+      <span>›</span>
+      <span class="current">Porovnání verzí</span>
+    </div>
+    <span class="compare-title">V{{ version.version_number }} vs V{{ version.version_number - 1 }}</span>
+    <span class="compare-meta">Změny mezi poslední a předchozí verzí dokumentu</span>
+  </div>
+  <div class="view-tabs">
+    <a href="{{ url_for('projects.results', project_id=project.id, version_id=version.id) }}" class="view-tab">Výsledky</a>
+    <a href="{{ url_for('projects.diff', project_id=project.id, version_id=version.id) }}" class="view-tab active">Porovnání</a>
+  </div>
+</div>
+
+<div class="diff-layout">
+  <aside class="diff-sidebar">
+    <div class="summary-card">
+      <h3>Souhrn změn</h3>
+      <div class="summary-stats">
+        <div class="stat-box stat-added"><strong>{{ diff.summary.added }}</strong><span>Přidaných bloků</span></div>
+        <div class="stat-box stat-removed"><strong>{{ diff.summary.removed }}</strong><span>Odebraných bloků</span></div>
+        <div class="stat-box stat-fixed"><strong>{{ diff.summary.fixed }}</strong><span>Opravených chyb</span></div>
+        <div class="stat-box stat-open"><strong>{{ diff.summary.open }}</strong><span>Stále otevřených</span></div>
+      </div>
+    </div>
+    <div class="change-group">
+      <h3>Klíčové rozdíly</h3>
+      {% for change in diff.changes %}
+      <div class="change-item">
+        <span class="change-type {{ change.kind }}">{{ change.label }}</span>
+        <p>{{ change.description }}</p>
+        <small>{{ change.location }}</small>
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <main class="diff-main">
+    <div class="compare-banner">
+      <div>
+        <h1>Porovnání verzí dokumentu</h1>
+        <p>Vizualizace změn mezi verzemi slouží pro rychlé ověření, co student skutečně doplnil, zpřesnil nebo odstranil po předchozí analýze.</p>
+      </div>
+      <div class="version-pills">
+        <span class="pill">V{{ version.version_number - 1 }}</span>
+        <span class="pill current">V{{ version.version_number }}</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-chip">Zeleně: nové pasáže</span>
+      <span class="legend-chip">Červeně: odstraněné pasáže</span>
+      <span class="legend-chip">Lososově: upravené formulace</span>
+    </div>
+
+    <div class="diff-grid">
+      <section class="doc-panel">
+        <div class="doc-panel-header"><h2>Verze V{{ version.version_number - 1 }}</h2><span>Před úpravami</span></div>
+        <div class="doc-content">{{ diff.before_html|safe }}</div>
+      </section>
+      <section class="doc-panel">
+        <div class="doc-panel-header"><h2>Verze V{{ version.version_number }}</h2><span>Po úpravách</span></div>
+        <div class="doc-content">{{ diff.after_html|safe }}</div>
+      </section>
+    </div>
+  </main>
+</div>
+{% endblock %}

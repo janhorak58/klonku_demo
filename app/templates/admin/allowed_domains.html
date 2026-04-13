@@ -1,0 +1,65 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Povolené domény{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>Povolené domény</h1>
+      <p>Whitelist institucionálních e-mailů pro akademický free tier.</p>
+    </div>
+  </div>
+
+  <div class="content-grid single">
+    <div class="panel">
+      <table class="activity-table">
+        <thead>
+          <tr><th>Doména</th><th>Univerzita</th><th>Free skeny</th><th>Aktivní</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for domain in domains %}
+          <tr>
+            <td><strong>{{ domain.domain }}</strong></td>
+            <td>{{ domain.university_name }}</td>
+            <td>{{ domain.free_analyses_per_month }}</td>
+            <td>{{ 'Ano' if domain.active else 'Ne' }}</td>
+            <td class="table-actions">
+              <form method="post">
+                <input type="hidden" name="action" value="toggle">
+                <input type="hidden" name="domain_id" value="{{ domain.id }}">
+                <input type="hidden" name="current_active" value="{{ 'true' if domain.active else 'false' }}">
+                <button type="submit" class="btn-link">Přepnout</button>
+              </form>
+              <form method="post" class="table-inline-form">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="domain_id" value="{{ domain.id }}">
+                <input class="input" name="university_name" value="{{ domain.university_name }}">
+                <input class="input" type="number" min="0" name="free_analyses_per_month" value="{{ domain.free_analyses_per_month }}">
+                <button type="submit" class="btn-link">Uložit</button>
+              </form>
+              <form method="post">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="domain_id" value="{{ domain.id }}">
+                <button type="submit" class="btn-link danger-link">Smazat</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h2>Přidat doménu</h2></div>
+      <form method="post" class="stack-form">
+        <input type="hidden" name="action" value="create">
+        <div class="field"><label for="domain">Doména</label><input class="input" id="domain" name="domain" placeholder="vut.cz"></div>
+        <div class="field"><label for="university_name">Univerzita</label><input class="input" id="university_name" name="university_name" placeholder="Vysoké učení technické v Brně"></div>
+        <div class="field"><label for="free_analyses_per_month">Free analýzy / měsíc</label><input class="input" type="number" min="0" id="free_analyses_per_month" name="free_analyses_per_month" value="1"></div>
+        <button type="submit" class="btn-primary">Přidat doménu</button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

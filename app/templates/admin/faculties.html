@@ -1,0 +1,41 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Fakulty{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>Fakulty a pipeline</h1>
+      <p>Správa fakultních sad kontrolních kroků pro studentské projekty.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="faculties">
+      {% for faculty in faculties %}
+      <div class="faculty-row">
+        <div class="faculty-name">
+          <strong>{{ faculty.code }}</strong>
+          <span>{{ faculty.name }}</span>
+        </div>
+        <div class="faculty-count">{{ faculty.pipeline_count }} kroků</div>
+        <div class="faculty-growth"><a href="{{ url_for('admin.faculty_pipeline', faculty_id=faculty.id) }}" class="btn-link">Spravovat</a></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>Přidat fakultu</h2></div>
+    <form method="post" class="stack-form">
+      <div class="field-grid">
+        <div class="field"><label for="code">Kód</label><input class="input" id="code" name="code" placeholder="FAI UTB"></div>
+        <div class="field"><label for="short_name">Zkratka</label><input class="input" id="short_name" name="short_name" placeholder="FAI"></div>
+        <div class="field wide"><label for="name">Název</label><input class="input" id="name" name="name" placeholder="Fakulta aplikované informatiky"></div>
+        <div class="field wide"><label for="university_name">Univerzita</label><input class="input" id="university_name" name="university_name" placeholder="Univerzita Tomáše Bati"></div>
+      </div>
+      <button type="submit" class="btn-primary">Přidat fakultu</button>
+    </form>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BP Checker — API Design Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222638;
+      --border: #2e3348;
+      --accent: #6c8cff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --orange: #fb923c;
+      --text: #e2e8f0;
+      --text-muted: #8892aa;
+      --text-dim: #4a5568;
+      --code-bg: #141720;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav .logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    nav .logo h1 { font-size: 17px; font-weight: 700; color: var(--accent); }
+    nav .logo p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    nav ul { list-style: none; }
+    nav ul li a {
+      display: block;
+      padding: 7px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    nav ul li a:hover { color: var(--text); background: var(--surface2); }
+    nav ul li a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(108,140,255,0.08); }
+
+    nav .section-label {
+      padding: 16px 20px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+
+    main {
+      flex: 1;
+      padding: 48px 60px;
+      max-width: 1000px;
+    }
+
+    /* Typography */
+    h1 { font-size: 32px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    h2 { font-size: 22px; font-weight: 700; color: var(--text); margin: 48px 0 16px; padding-top: 16px; }
+    h3 { font-size: 16px; font-weight: 600; color: var(--accent2); margin: 28px 0 10px; }
+    h4 { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+    p { margin-bottom: 14px; color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+
+    section { margin-bottom: 24px; scroll-margin-top: 24px; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    /* Method badges */
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      font-family: monospace;
+      min-width: 52px;
+      text-align: center;
+    }
+    .badge.GET    { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+    .badge.POST   { background: rgba(108,140,255,0.15); color: var(--accent); border: 1px solid rgba(108,140,255,0.3); }
+    .badge.PUT    { background: rgba(251,191,36,0.15); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+    .badge.DELETE { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+    .badge.PATCH  { background: rgba(251,146,60,0.15); color: var(--orange); border: 1px solid rgba(251,146,60,0.3); }
+
+    /* Endpoint table */
+    .endpoint-group { margin-bottom: 36px; }
+
+    .endpoint-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+    .endpoint-row:hover { border-color: var(--accent); }
+
+    .endpoint-row .path {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+      word-break: break-all;
+    }
+
+    .endpoint-row .path .param { color: var(--accent2); }
+
+    .endpoint-row .desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      min-width: 200px;
+      max-width: 300px;
+    }
+
+    .endpoint-row .auth-tag {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      align-self: flex-start;
+    }
+    .tag-admin { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+    .tag-auth  { background: rgba(167,139,250,0.1); color: var(--accent2); border: 1px solid rgba(167,139,250,0.25); }
+    .tag-public { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+
+    /* Code */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent2);
+    }
+    pre code { background: none; padding: 0; color: var(--text); }
+
+    /* Callout */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(108,140,255,0.07);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .callout.warn { border-left-color: var(--yellow); background: rgba(251,191,36,0.07); }
+    .callout.info { border-left-color: var(--green); background: rgba(52,211,153,0.07); }
+
+    /* Mermaid */
+    .mermaid-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 16px 0;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    /* Severity table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+    th {
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .sev-critical { color: #ef4444; font-weight: 700; }
+    .sev-high     { color: #f97316; font-weight: 600; }
+    .sev-medium   { color: var(--yellow); }
+    .sev-low      { color: var(--green); }
+
+    /* Tier table */
+    .tier-row-free { background: rgba(52,211,153,0.04); }
+    .tier-row-paid { background: rgba(108,140,255,0.04); }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin: 2px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Step pipeline card */
+    .pipeline-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .step-num {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    @media (max-width: 900px) {
+      nav { display: none; }
+      main { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="logo">
+    <h1>BP Checker</h1>
+    <p>FastAPI Design Document</p>
+  </div>
+  <ul>
+    <li><span class="section-label">Přehled</span></li>
+    <li><a href="#overview">Architektura</a></li>
+    <li><a href="#auth-flow">Auth flow</a></li>
+    <li><a href="#data-model">Datový model</a></li>
+
+    <li><span class="section-label">Endpointy</span></li>
+    <li><a href="#ep-auth">Autentizace</a></li>
+    <li><a href="#ep-users">Uživatelé</a></li>
+    <li><a href="#ep-projects">Projekty</a></li>
+    <li><a href="#ep-versions">Verze dokumentů</a></li>
+    <li><a href="#ep-pipeline">Pipeline</a></li>
+    <li><a href="#ep-errors">Chyby</a></li>
+    <li><a href="#ep-admin">Admin</a></li>
+
+    <li><span class="section-label">Pipeline</span></li>
+    <li><a href="#pipeline-design">Design pipeline</a></li>
+    <li><a href="#error-types">Typy chyb</a></li>
+    <li><a href="#json-schema">JSON schéma chyby</a></li>
+
+    <li><span class="section-label">Ostatní</span></li>
+    <li><a href="#rate-limiting">Rate limiting</a></li>
+    <li><a href="#access-control">Řízení přístupu</a></li>
+    <li><a href="#email-verification">Institucionální emaily</a></li>
+    <li><a href="#cost-estimate">Odhad nákladů</a></li>
+    <li><a href="#model-comparison">Srovnání modelů</a></li>
+    <li><a href="#subscription-fit">Předplatné vs. náklady</a></li>
+  </ul>
+</nav>
+
+<!-- Main content -->
+<main>
+
+  <h1>BP Checker — API Design</h1>
+  <p class="subtitle">
+    Návrh FastAPI backendu pro službu automatické kontroly bakalářských a diplomových prací pomocí LLM.<br>
+    Platforma: <strong>TUL</strong> (FM, FE, FP) &nbsp;|&nbsp; Verze: <strong>0.1 draft</strong> &nbsp;|&nbsp; Datum: 2026-03-31
+  </p>
+
+  <!-- =================== ARCHITEKTURA =================== -->
+  <section id="overview">
+    <h2>Architektura systému</h2>
+    <p>
+      Systém se skládá ze dvou oddělených aplikací: <strong>Flask frontendu</strong>, který obsluhuje UI,
+      a <strong>FastAPI backendu</strong>, který zajišťuje veškerou business logiku, správu dat a orchestraci LLM pipeline.
+      Frontend volá backend přímo přes REST API pomocí JWT tokenů.
+    </p>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+graph TB
+    subgraph Client["Klient"]
+        B[Prohlížeč]
+    end
+    subgraph Frontend["Flask Frontend"]
+        F[Flask App\nUI / templating]
+    end
+    subgraph Backend["FastAPI Backend"]
+        A[API vrstva\nendpointy]
+        P[Pipeline orchestrátor\nARQ worker]
+        CONV[Pandoc\nDOCX/LaTeX → Markdown]
+        LLM[LLM wrapper\nOpenAI / Anthropic]
+    end
+    subgraph Storage["Úložiště"]
+        DB[(PostgreSQL\nuživatelé, projekty,\nchyby, pipeline)]
+        REDIS[(Redis\nARQ task queue)]
+        FS[Lokální filesystem\nsoubory + Markdown]
+    end
+
+    B -->|HTTP| F
+    F -->|REST + JWT| A
+    A --> DB
+    A --> REDIS
+    REDIS --> P
+    P --> CONV
+    P --> LLM
+    P --> FS
+    P --> DB
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <h4>Flask Frontend</h4>
+        <p style="margin:0;font-size:13.5px;">Renderování UI, session management pro prohlížeč, předává JWT tokeny z backendu.</p>
+      </div>
+      <div class="card">
+        <h4>FastAPI Backend</h4>
+        <p style="margin:0;font-size:13.5px;">Veškerá business logika, autentizace, správa projektů, spouštění pipeline.</p>
+      </div>
+      <div class="card">
+        <h4>ARQ + Redis (Task queue)</h4>
+        <p style="margin:0;font-size:13.5px;">Asynchronní zpracování dokumentů. ARQ worker konzumuje joby z Redis fronty. Polling z frontendu zjišťuje stav analýzy. Priority: paid &gt; free.</p>
+      </div>
+      <div class="card">
+        <h4>Pandoc (Konverze)</h4>
+        <p style="margin:0;font-size:13.5px;">Převod DOCX a LaTeX na Markdown před analýzou. Při selhání konverze dostane verze stav <code>conversion_failed</code>.</p>
+      </div>
+      <div class="card">
+        <h4>Lokální filesystem (soubory)</h4>
+        <p style="margin:0;font-size:13.5px;">Nahrané soubory a Markdown výstupy jsou uloženy na lokálním disku.
+        <strong>Constraint:</strong> vyžaduje single-instance deploy — FastAPI backend a ARQ worker musí běžet na stejném hostu (sdílený volume v docker-compose).
+        Pokud by se v budoucnu přešlo na více instancí, je nutné migrovat na S3-compatible storage (MinIO nebo AWS S3).</p>
+      </div>
+      <div class="card">
+        <h4>LLM</h4>
+        <p style="margin:0;font-size:13.5px;">Každý krok pipeline volá LLM s příslušným promptem. Výstupem je standardizovaný JSON chyb. Dokument se do LLM posílá jako <em>user</em> content oddělený od <em>system</em> instrukce.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== AUTH FLOW =================== -->
+  <section id="auth-flow">
+    <h2>Auth flow</h2>
+    <p>
+      Backend vydává <strong>JWT access token</strong> (krátká životnost, ~15 min) a <strong>refresh token</strong> (delší životnost).
+      Flask frontend ukládá tokeny a přikládá <code>Authorization: Bearer &lt;token&gt;</code> ke každému API volání.
+    </p>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    participant U as Uživatel
+    participant F as Flask Frontend
+    participant A as FastAPI Backend
+    participant G as Google OAuth
+
+    U->>F: Klikne "Přihlásit se"
+    alt Email + heslo
+        F->>A: POST /auth/login
+        A-->>F: access_token + refresh_token
+    else Google OAuth
+        F->>G: Redirect na Google
+        G-->>F: OAuth callback s code
+        F->>A: POST /auth/google {code}
+        A-->>F: access_token + refresh_token
+    end
+    F-->>U: Uloží tokeny, přesměruje na dashboard
+
+    Note over F,A: Každý následující request
+    F->>A: GET /projects (Authorization: Bearer token)
+    A-->>F: data
+
+    Note over F,A: Token expiruje
+    F->>A: POST /auth/refresh {refresh_token}
+    A-->>F: nový access_token
+      </div>
+    </div>
+
+    <div class="callout warn">
+      Refresh token musí být uložen bezpečně (httpOnly cookie nebo bezpečné úložiště na serveru Flask frontendu — nikdy v localStorage).
+    </div>
+    <div class="callout warn">
+      <strong>Rate limiting na auth endpointech:</strong>
+      <code>POST /auth/login</code> a <code>POST /auth/register</code> jsou limitovány na <strong>10 pokusů / minutu per IP</strong>.
+      Po překročení limit vrátí <code>429 Too Many Requests</code> s hlavičkou <code>Retry-After</code>.
+      Implementace: FastAPI middleware (např. <code>slowapi</code> s Redis backendem).
+    </div>
+    <div class="callout">
+      <strong>CORS:</strong> Backend povoluje requesty pouze z origin adresy Flask frontendu.
+      Nastavení přes <code>CORSMiddleware</code> — <code>allow_origins</code> je konfigurovatelné přes env proměnnou, nikoli hardcoded.
+    </div>
+    <div class="callout">
+      <strong>HTTPS:</strong> Veškerá komunikace (Browser → Flask i Flask → FastAPI) musí probíhat přes HTTPS.
+      Interní Flask → FastAPI komunikace může být HTTP v rámci privátní sítě/Docker networku, ale nikdy přes veřejný internet.
+    </div>
+  </section>
+
+  <!-- =================== DATOVÝ MODEL =================== -->
+  <section id="data-model">
+    <h2>Datový model (ER diagram)</h2>
+    <p>
+      Multi-tenant architektura: každý student (<code>User</code>) má vlastní projekty (<code>Project</code>).
+      Každý projekt patří jedné fakultě a má sérii verzí (<code>DocumentVersion</code>) — snapshot při každém uploadu.
+      Každá verze má výsledky analýzy (<code>FoundError</code>). Pipeline se konfiguruje per-fakulta superadminem.
+    </p>
+    <div class="callout warn">
+      <strong>Poznámky k modelu (v. 0.2):</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li><code>USER</code>: odstraněny sloupce <code>tokens_used_today/week</code> — nahrazeny tabulkou <code>TOKEN_USAGE_EVENT</code> (atomické operace, auditovatelnost). Přidán <code>tier</code> (free/paid).</li>
+        <li><code>PIPELINE_STEP</code>: přidán <code>prompt_version</code> + entita <code>PIPELINE_STEP_VERSION</code> — zachovává historii promptů pro reprodukovatelnost výsledků.</li>
+        <li><code>FOUND_ERROR</code>: odstraněn redundantní <code>error_type_id</code> (FK je <code>error_type_slug</code>). Přidán <code>context_snippet</code> (~50 znaků okolí chyby) pro robustní diff mezi verzemi. Sémantika <code>is_resolved</code>: příznak je nastaven na záznamu ze <em>staré</em> verze a říká „tato chyba byla opravena v novější verzi". Nová verze neopravených chyb obsahuje odkaz přes <code>previous_error_id</code>.</li>
+        <li><code>DOCUMENT_VERSION</code>: <code>markdown_content</code> přesunuto do souborového systému, v DB jen cesta <code>markdown_path</code>.</li>
+        <li><code>ADMIN_AUDIT_LOG</code>: logování všech admin akcí (změny promptů, úpravy uživatelů, atd.).</li>
+      </ul>
+    </div>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+erDiagram
+    USER {
+        uuid id
+        string email
+        string hashed_password
+        string google_id
+        enum role
+        enum tier
+        bool email_verified
+        int monthly_scan_budget
+        int monthly_scan_count
+        datetime created_at
+    }
+
+    FACULTY {
+        uuid id
+        string code
+        string name
+    }
+
+    PIPELINE_STEP {
+        uuid id
+        uuid faculty_id
+        string name
+        text prompt_template
+        int prompt_version
+        int order
+        bool is_active
+    }
+
+    PIPELINE_STEP_VERSION {
+        uuid id
+        uuid pipeline_step_id
+        int version
+        text prompt_template
+        datetime created_at
+        uuid created_by
+    }
+
+    TOKEN_USAGE_EVENT {
+        uuid id
+        uuid user_id
+        uuid version_id
+        uuid step_id
+        int tokens_input
+        int tokens_output
+        datetime created_at
+    }
+
+    ERROR_TYPE {
+        uuid id
+        string slug
+        string label
+        string description
+        bool is_system
+    }
+
+    PROJECT {
+        uuid id
+        uuid user_id
+        uuid faculty_id
+        string title
+        enum format
+        datetime created_at
+    }
+
+    PROJECT_PIPELINE_CONFIG {
+        uuid id
+        uuid project_id
+        uuid pipeline_step_id
+        bool enabled
+    }
+
+    DOCUMENT_VERSION {
+        uuid id
+        uuid project_id
+        int version_number
+        string file_path
+        string markdown_path
+        enum status
+        int tokens_consumed
+        datetime created_at
+    }
+
+    FOUND_ERROR {
+        uuid id
+        uuid version_id
+        uuid error_type_id
+        string error_type_slug
+        uuid pipeline_step_id
+        enum severity
+        int char_start
+        int char_end
+        string context_snippet
+        text description
+        text suggested_fix
+        uuid previous_error_id
+        bool is_resolved
+    }
+
+    ADMIN_AUDIT_LOG {
+        uuid id
+        uuid admin_id
+        string action
+        string target_type
+        uuid target_id
+        json payload
+        datetime created_at
+    }
+
+    USER ||--o{ PROJECT : owns
+    USER ||--o{ TOKEN_USAGE_EVENT : generates
+    FACULTY ||--o{ PROJECT : "has students in"
+    FACULTY ||--o{ PIPELINE_STEP : defines
+    PIPELINE_STEP ||--o{ PIPELINE_STEP_VERSION : versions
+    PROJECT ||--o{ DOCUMENT_VERSION : has
+    PROJECT ||--o{ PROJECT_PIPELINE_CONFIG : configures
+    PIPELINE_STEP ||--o{ PROJECT_PIPELINE_CONFIG : included_in
+    DOCUMENT_VERSION ||--o{ FOUND_ERROR : contains
+    DOCUMENT_VERSION ||--o{ TOKEN_USAGE_EVENT : tracks
+    ERROR_TYPE ||--o{ FOUND_ERROR : categorizes
+    FOUND_ERROR ||--o| FOUND_ERROR : "previous version"
+    PIPELINE_STEP ||--o{ FOUND_ERROR : produced_by
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Upřesnění datového modelu:</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li><strong>FOUND_ERROR.error_type_slug jako FK je riziková volba.</strong>
+          Textový cizí klíč znamená, že přejmenování slugu v <code>ERROR_TYPE</code> rozbije historické záznamy.
+          Správné řešení: FK je <code>error_type_id UUID</code>, slug je jen denormalizovaná kopie pro rychlé čtení.
+          Při změně slugu se provede <code>UPDATE FOUND_ERROR SET error_type_slug = 'new' WHERE error_type_id = '...'</code>.</li>
+        <li><strong>USER tabulka — nová pole:</strong> přidat <code>monthly_scan_count INT DEFAULT 0</code> a <code>monthly_scan_budget INT</code>.
+          Odstranit <code>daily_token_budget</code> a <code>weekly_token_budget</code> (nahrazeno scan metrikou).</li>
+        <li><strong>Chybějící entita v ER diagramu:</strong> <code>ALLOWED_DOMAIN</code> (viz sekce Institucionální emaily) — přidat do diagramu v příští revizi.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- =================== ENDPOINTY =================== -->
+
+  <section id="ep-auth">
+    <h2>Autentizace</h2>
+    <p>Veřejné endpointy pro přihlášení, registraci a správu tokenů.</p>
+
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/register</span>
+        <span class="desc">Registrace email + heslo</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/login</span>
+        <span class="desc">Přihlášení email + heslo, vrátí JWT</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/google</span>
+        <span class="desc">OAuth callback — vymění Google code za JWT</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/refresh</span>
+        <span class="desc">Vydá nový access token pomocí refresh tokenu</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/logout</span>
+        <span class="desc">Invaliduje refresh token (blacklist)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/auth/verify-email/<span class="param">{token}</span></span>
+        <span class="desc">Potvrzení emailu (UUID token z verifikačního mailu, platnost 24 h)</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/forgot-password</span>
+        <span class="desc">Odeslání odkazu pro reset hesla na zadaný email</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/auth/reset-password</span>
+        <span class="desc">Reset hesla pomocí tokenu z emailu (token + nové heslo)</span>
+        <span class="auth-tag tag-public">public</span>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Refresh token blacklist:</strong>
+      Refresh tokeny jsou po odhlášení ukládány do <strong>Redis setu</strong> s TTL odpovídajícím jejich zbývající platnosti.
+      Při každém <code>POST /auth/refresh</code> backend zkontroluje, zda token v setu není.
+      Při výpadku Redisu selže endpoint s <code>503</code> — nikdy nesmí propadnout na "token je platný".
+      DB fallback (tabulka <code>REVOKED_TOKEN</code>) se použije pouze pokud Redis není dostupný jako primární store.
+    </div>
+    <div class="callout warn">
+      <strong>Google OAuth — CSRF ochrana:</strong>
+      Před přesměrováním na Google vygeneruje Flask <code>state</code> token (náhodný UUID), uloží ho do session a předá jako parametr OAuth URL.
+      Google ho vrátí v callbacku — Flask ověří shodu <em>před</em> předáním <code>code</code> na FastAPI.
+      Bez toho je flow zranitelné vůči CSRF útoku.
+    </div>
+
+    <h3>Příklad: POST /auth/login</h3>
+    <pre><code>{
+  "email": "jan.novak@tul.cz",
+  "password": "heslo123"
+}</code></pre>
+    <h4>Response 200</h4>
+    <pre><code>{
+  "access_token": "eyJhbGci...",
+  "refresh_token": "eyJhbGci...",
+  "token_type": "bearer",
+  "user": {
+    "id": "uuid",
+    "email": "jan.novak@tul.cz",
+    "role": "student"
+  }
+}</code></pre>
+  </section>
+
+  <!-- =================== USERS =================== -->
+  <section id="ep-users">
+    <h2>Uživatelé</h2>
+    <p>Správa profilu přihlášeného uživatele a přehled využití tokenů.</p>
+
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/users/me</span>
+        <span class="desc">Profil aktuálního uživatele</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PUT">PUT</span>
+        <span class="path">/users/me</span>
+        <span class="desc">Úprava profilu (jméno, heslo)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/users/me/usage</span>
+        <span class="desc">Využití tokenového přídělu (denní / týdenní %)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+    </div>
+
+    <h3>GET /users/me/usage — Response</h3>
+    <pre><code>{
+  "daily": {
+    "used": 42000,
+    "budget": 100000,
+    "percent": 42.0,
+    "resets_at": "2026-04-01T00:00:00Z"
+  },
+  "weekly": {
+    "used": 180000,
+    "budget": 500000,
+    "percent": 36.0,
+    "resets_at": "2026-04-06T00:00:00Z"
+  },
+  "tier": "free"
+}</code></pre>
+    <div class="callout info">
+      UI zobrazuje uživateli pouze procento — nikdy absolutní počet tokenů. Tím se zamezuje zpětnému inženýrování ceny.
+    </div>
+  </section>
+
+  <!-- =================== PROJECTS =================== -->
+  <section id="ep-projects">
+    <h2>Projekty</h2>
+    <p>
+      Projekt reprezentuje jednu bakalářskou/diplomovou práci studenta. Při vytvoření se zadá fakulta a formát dokumentu.
+      Student si také zvolí sadu kroků pipeline (nebo ponechá výchozí doporučenou sadu pro danou fakultu).
+    </p>
+
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects</span>
+        <span class="desc">Seznam projektů přihlášeného uživatele</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/projects</span>
+        <span class="desc">Vytvoření nového projektu (onboarding)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span></span>
+        <span class="desc">Detail projektu vč. posledních verzí</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PUT">PUT</span>
+        <span class="path">/projects/<span class="param">{project_id}</span></span>
+        <span class="desc">Přejmenování projektu</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge DELETE">DELETE</span>
+        <span class="path">/projects/<span class="param">{project_id}</span></span>
+        <span class="desc">Smazání projektu i všech verzí</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/pipeline-config</span>
+        <span class="desc">Aktivní kroky pipeline pro projekt</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PUT">PUT</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/pipeline-config</span>
+        <span class="desc">Zapnutí/vypnutí konkrétních kroků pipeline</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Pagination na list endpointech:</strong>
+      <code>GET /projects</code>, <code>GET /projects/{id}/versions</code> a <code>GET /admin/users</code>
+      podporují query parametry <code>?limit=20&amp;offset=0</code> (výchozí limit 20, maximum 100).
+      Response vrací <code>{"items": [...], "total": N}</code>.
+    </div>
+
+    <h3>POST /projects — Request</h3>
+    <pre><code>{
+  "title": "Analýza sentimentu v sociálních sítích",
+  "faculty_id": "uuid-fm",
+  "format": "docx",
+  "pipeline_step_ids": ["uuid-step-1", "uuid-step-3"]
+  // pokud prázdné → použijí se výchozí kroky fakulty
+}</code></pre>
+
+    <h3>PUT /projects/{project_id}/pipeline-config — Request</h3>
+    <pre><code>{
+  "steps": [
+    { "pipeline_step_id": "uuid-step-1", "enabled": true },
+    { "pipeline_step_id": "uuid-step-2", "enabled": false },
+    { "pipeline_step_id": "uuid-step-3", "enabled": true }
+  ]
+}</code></pre>
+  </section>
+
+  <!-- =================== VERSIONS =================== -->
+  <section id="ep-versions">
+    <h2>Verze dokumentů</h2>
+    <p>
+      Každý upload souboru vytvoří nový <strong>snapshot (verzi)</strong> dokumentu. Systém:
+    </p>
+    <ol style="margin: 0 0 14px 20px; color: var(--text);">
+      <li>Přijme soubor (DOCX / LaTeX)</li>
+      <li>Převede ho na Markdown</li>
+      <li>Asynchronně spustí pipeline kroky</li>
+      <li>Porovná výsledné chyby s předchozí verzí — označí neopravené</li>
+    </ol>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart LR
+    A[Upload souboru] --> B[Převod na Markdown]
+    B --> C{Fronta kroků pipeline}
+    C --> D[Krok 1\nLLM volání]
+    C --> E[Krok 2\nLLM volání]
+    C --> F[Krok N\nLLM volání]
+    D & E & F --> G[Merge JSON výstupů]
+    G --> H{Předchozí verze?}
+    H -->|Ano| I[Porovnání chyb\npřiřazení previous_error_id]
+    H -->|Ne| J[Uložení chyb]
+    I --> J
+    J --> K[Status: completed]
+      </div>
+    </div>
+
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions</span>
+        <span class="desc">Seznam všech verzí projektu</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions</span>
+        <span class="desc">Upload nového souboru → spustí analýzu</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span></span>
+        <span class="desc">Detail verze + stav analýzy</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span>/document</span>
+        <span class="desc">Markdown obsah dokumentu</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span>/errors</span>
+        <span class="desc">Seznam chyb nalezených v dané verzi</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span>/diff</span>
+        <span class="desc">Porovnání s předchozí verzí (neopravené / nové / opravené)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge DELETE">DELETE</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span></span>
+        <span class="desc">Smazání verze (jen nejnovější, ne historii)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Validace uploadovaného souboru (před konverzí):</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li>Povolené typy: <code>.docx</code> a <code>.tex</code> — ověřit MIME type i příponu (ne jen příponu)</li>
+        <li>Maximální velikost souboru: <strong>20 MB</strong> (FastAPI <code>UploadFile</code> limit v middleware)</li>
+        <li>Soubor se uloží na disk až po validaci — nikdy před ní</li>
+        <li>Pandoc se spouští s timeoutem (30 s) a pod omezeným uživatelem — ne jako root</li>
+      </ul>
+    </div>
+    <div class="callout warn">
+      <strong>Cascade delete — specifikace:</strong>
+      <code>DELETE /projects/{project_id}</code> provede hard delete v tomto pořadí:
+      <ol style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li>Pokud existuje běžící pipeline job pro projekt → zastavit (ARQ job cancel)</li>
+        <li>Smazat soubory z filesystemu / storage pro všechny verze projektu</li>
+        <li>DB cascade: <code>FOUND_ERROR</code> → <code>TOKEN_USAGE_EVENT</code> → <code>DOCUMENT_VERSION</code> → <code>PROJECT_PIPELINE_CONFIG</code> → <code>PROJECT</code></li>
+      </ol>
+      <code>DELETE /versions/{version_id}</code> (povoleno jen pro nejnovější verzi) — stejný postup pro danou verzi, bez smazání projektu.
+    </div>
+
+    <h3>GET /versions/{id} — Response</h3>
+    <pre><code>{
+  "id": "uuid",
+  "version_number": 3,
+  "status": "completed",         // pending | processing | completed | partial | failed | conversion_failed
+  "tokens_consumed": 12400,
+  "error_count": 7,
+  "unresolved_from_previous": 3, // chyby co přišly z minulé verze a stále jsou
+  "created_at": "2026-03-31T14:22:00Z"
+}</code></pre>
+
+    <h3>Porovnání verzí — diff endpoint</h3>
+    <pre><code>{
+  "new_errors": [...],        // chyby, které v předchozí verzi nebyly
+  "unresolved_errors": [...], // chyby z minulé verze, které stále existují
+  "resolved_errors": [...]    // chyby, které uživatel opravil (is_resolved=true na záznamu staré verze)
+}</code></pre>
+
+    <h3>Algoritmus porovnání chyb mezi verzemi</h3>
+    <p>Prostý matching na <code>char_start/char_end</code> je křehký — při každé editaci textu se pozice posunou.
+    Systém proto používá dvoustupňový matching:</p>
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div>
+        <strong>Primary: context_snippet + error_type_slug</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">Každá chyba ukládá <code>context_snippet</code> — ~50 znaků textu okolí chyby (20 před, text chyby, 20 za).
+        Pokud se snippet i slug shodují (Levenshtein vzdálenost ≤ 10 %), chyby jsou považovány za stejné.</span>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div>
+        <strong>Fallback: fuzzy pozice ± 200 znaků + slug</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">Pokud snippet nenajde shodu, zkusí se porovnání na základě overlapping char pozic s tolerancí ±200 znaků
+        a shodným <code>error_type_slug</code>. Pokud ani to nestačí, chyba je označena jako nová.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== PIPELINE =================== -->
+  <section id="ep-pipeline">
+    <h2>Pipeline — stav analýzy</h2>
+    <p>
+      Pipeline běží asynchronně. Frontend používá <strong>polling</strong> — periodicky se ptá na stav,
+      dokud se status nezmění na <code>completed</code> nebo <code>failed</code>.
+    </p>
+
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span>/analysis</span>
+        <span class="desc">Aktuální stav analýzy (polling)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/projects/<span class="param">{project_id}</span>/versions/<span class="param">{version_id}</span>/analysis/retry</span>
+        <span class="desc">Opakovat analýzu (při selhání)</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/faculties/<span class="param">{faculty_id}</span>/pipeline-steps</span>
+        <span class="desc">Dostupné kroky pipeline pro danou fakultu</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+    </div>
+
+    <h3>GET /analysis — Response (průběh)</h3>
+    <pre><code>{
+  "status": "processing",
+  "progress": {
+    "total_steps": 5,
+    "completed_steps": 2,
+    "current_step": "Kontrola citací",
+    "percent": 40
+  },
+  "tokens_consumed_so_far": 4800,
+  "started_at": "2026-03-31T14:22:05Z"
+}</code></pre>
+
+    <div class="callout warn">
+      Pokud se v průběhu analýzy vyčerpá tokenový příděl uživatele, pipeline se zastaví a vrátí
+      <code>status: "partial"</code> s <code>reason: "token_limit_exceeded"</code>. Chyby nalezené do té doby jsou zachovány.
+      Stav <code>partial</code> se liší od <code>failed</code> — analýza doběhla částečně, výsledky jsou použitelné.
+    </div>
+    <div class="callout warn">
+      <strong>Polling — specifikace chování frontendu:</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li>Interval: <strong>3 s</strong> prvních 30 s, pak <strong>10 s</strong> (backoff po počátečním čekání)</li>
+        <li>Timeout: po <strong>15 minutách</strong> bez terminálu stavu frontend přestane pollovat a zobrazí chybu</li>
+        <li>Na backendu: ARQ worker nastavuje <code>status: failed</code> pokud job neodpoví do <strong>20 minut</strong> (ARQ job timeout) — zabraňuje uváznutí ve stavu <code>processing</code></li>
+        <li>Terminální stavy: <code>completed</code>, <code>partial</code>, <code>failed</code>, <code>conversion_failed</code> — po jejich přijetí frontend polling zastaví</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- =================== ERRORS =================== -->
+  <section id="ep-errors">
+    <h2>Chyby (Found Errors)</h2>
+    <p>
+      Chyba je základní jednotka výstupu analýzy. Má přesnou lokaci v textu (znaky), typ, závažnost a návrh řešení.
+      UI na základě <code>char_start</code> a <code>char_end</code> zvýrazní příslušnou část Markdownu.
+    </p>
+
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/errors/<span class="param">{error_id}</span></span>
+        <span class="desc">Detail jedné konkrétní chyby</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/error-types</span>
+        <span class="desc">Seznam předdefinovaných typů chyb</span>
+        <span class="auth-tag tag-auth">auth</span>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>IDOR ochrana na <code>GET /errors/{error_id}</code>:</strong>
+      Endpoint musí projít celý řetězec vlastnictví: <code>error → version → project → user_id == current_user.id</code>.
+      Nestačí zkontrolovat jen existenci záznamu.
+    </div>
+
+    <h3>FastAPI dependency pro chyby</h3>
+    <pre><code>async def get_error_for_user(
+    error_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> FoundError:
+    error = db.get(FoundError, error_id)
+    if not error:
+        raise HTTPException(status_code=404)
+    version = db.get(DocumentVersion, error.version_id)
+    project = db.get(Project, version.project_id)
+    if project.user_id != current_user.id:
+        raise HTTPException(status_code=403)
+    return error</code></pre>
+  </section>
+
+  <!-- =================== ADMIN =================== -->
+  <section id="ep-admin">
+    <h2>Admin endpointy</h2>
+    <p>
+      Dostupné pouze pro uživatele s rolí <code>superadmin</code>. Umožňují spravovat uživatele, fakulty,
+      kroky pipeline a předdefinované typy chyb.
+    </p>
+
+    <div class="callout">
+      Všechny <code>/admin/*</code> endpointy vyžadují roli <strong>superadmin</strong>.
+      Pokus o přístup se studentským tokenem vrátí <code>403 Forbidden</code>.
+    </div>
+
+    <h3>Správa uživatelů</h3>
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/admin/users</span>
+        <span class="desc">Seznam všech uživatelů (s filtrováním)</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/admin/users/<span class="param">{user_id}</span></span>
+        <span class="desc">Detail uživatele vč. využití tokenů</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PUT">PUT</span>
+        <span class="path">/admin/users/<span class="param">{user_id}</span></span>
+        <span class="desc">Úprava role, tier, tokenového přídělu</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge DELETE">DELETE</span>
+        <span class="path">/admin/users/<span class="param">{user_id}</span></span>
+        <span class="desc">Smazání uživatele a jeho dat</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+    </div>
+
+    <h3>Fakulty a pipeline</h3>
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/admin/faculties</span>
+        <span class="desc">Seznam fakult</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/admin/faculties</span>
+        <span class="desc">Přidání nové fakulty</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/admin/faculties/<span class="param">{faculty_id}</span>/pipeline-steps</span>
+        <span class="desc">Kroky pipeline pro danou fakultu</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/admin/faculties/<span class="param">{faculty_id}</span>/pipeline-steps</span>
+        <span class="desc">Přidání nového kroku pipeline</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PUT">PUT</span>
+        <span class="path">/admin/pipeline-steps/<span class="param">{step_id}</span></span>
+        <span class="desc">Úprava kroku (prompt, pořadí, název)</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge DELETE">DELETE</span>
+        <span class="path">/admin/pipeline-steps/<span class="param">{step_id}</span></span>
+        <span class="desc">Smazání kroku pipeline</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+    </div>
+
+    <h3>Typy chyb</h3>
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/admin/error-types</span>
+        <span class="desc">Všechny typy chyb (systémové i vlastní)</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/admin/error-types</span>
+        <span class="desc">Přidání nového systémového typu chyby</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PUT">PUT</span>
+        <span class="path">/admin/error-types/<span class="param">{type_id}</span></span>
+        <span class="desc">Úprava popisu / labelu</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge DELETE">DELETE</span>
+        <span class="path">/admin/error-types/<span class="param">{type_id}</span></span>
+        <span class="desc">Odstranění vlastního typu (systémové nelze)</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- =================== PIPELINE DESIGN =================== -->
+  <section id="pipeline-design">
+    <h2>Design pipeline</h2>
+    <p>
+      Pipeline je sada kroků, kde každý krok je jedno volání LLM s předpřipraveným promptem.
+      Kroky jsou definovány per-fakulta superadminem a odrážejí specifické směrnice a pokyny
+      jednotlivých fakult TUL pro psaní závěrečných prací.
+    </p>
+
+    <h3>Jak funguje jeden krok</h3>
+    <div class="pipeline-step">
+      <div class="step-num">0</div>
+      <div>
+        <strong>Konverze souboru (Pandoc)</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">Po uploadu ARQ worker spustí Pandoc pro převod DOCX / LaTeX na Markdown. Maximální velikost dokumentu: <strong>50 stran (~25–35k tokenů)</strong>, která se vejde do context window. Při selhání konverze → <code>status: conversion_failed</code>, pipeline se nespustí.</span>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div>
+        <strong>Prompt template</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">Superadmin definuje prompt v admin dashboardu. Prompt tvoří <strong>system instrukci</strong> — obsahuje pouze instrukce pro LLM (co hledat, výstupní formát). <em>Nikdy</em> neobsahuje obsah dokumentu.</span>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div>
+        <strong>Sestavení vstupu — oddělení system / user</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">Markdown obsah dokumentu se posílá jako <strong>user message</strong>, nikdy jako součást system promptu. Tím se minimalizuje riziko prompt injection z obsahu práce studenta. Používá se JSON mode (structured output) pro deterministický výstup.</span>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">3</div>
+      <div>
+        <strong>LLM volání + parsování</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">LLM vrátí JSON seznam chyb. Backend validuje výstup proti schématu. Nevalidní chyby jsou zahozeny. Timeout: <strong>30 s per krok</strong>, retry: 3× s exponenciálním backoffem (1s, 2s, 4s). Při vyčerpání retry → krok označen jako <code>failed</code>, ostatní kroky pokračují.</span>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">4</div>
+      <div>
+        <strong>Uložení a merge</strong><br>
+        <span style="font-size:13px;color:var(--text-muted);">Výstupy všech kroků se sloučí do jednoho seznamu chyb dané verze. Duplicity se deduplikují podle překrývajícího se rozsahu a stejného typu. Spotřeba tokenů se loguje per-krok do <code>TOKEN_USAGE_EVENT</code>.</span>
+      </div>
+    </div>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TD
+    S[Student nahraje soubor] --> MD[Převod na Markdown]
+    MD --> Q[Task queue]
+
+    Q --> P1
+    Q --> P2
+    Q --> P3
+
+    subgraph "Kroky pipeline — FM"
+        P1["Krok: Chybějící části\n(obsah, abstrakt, závěr...)"]
+        P2["Krok: Typografie\n(odsazení, fonty, mezery)"]
+        P3["Krok: Citace\n(styl, úplnost, konzistence)"]
+    end
+
+    P1 & P2 & P3 --> MERGE[Merge výstupů]
+    MERGE --> DEDUP[Deduplikace + přiřazení ID]
+    DEDUP --> COMPARE{Existuje předchozí verze?}
+    COMPARE -->|Ano| DIFF[Porovnání → is_resolved, previous_error_id]
+    COMPARE -->|Ne| SAVE
+    DIFF --> SAVE[Uložení do DB]
+    SAVE --> DONE[Status: completed]
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Proč oddělené kroky místo jednoho volání?</strong><br>
+      Každý krok se specializuje na jeden typ problému, má vlastní prompt optimalizovaný pro daný kontext,
+      a je snazší ho ladit, vylepšovat nebo vyměnit nezávisle. Zároveň umožňuje uživateli vybrat pouze
+      relevantní kontroly. Kroky běží paralelně — každý jako samostatný ARQ sub-job. Selhání jednoho kroku neblokuje ostatní.
+    </div>
+    <div class="callout warn">
+      <strong>Prompt injection ochrana:</strong>
+      System prompt (instrukce) a user content (dokument) jsou vždy předávány jako oddělené zprávy v LLM API volání.
+      Používá se structured output / JSON mode — model vrací pouze validní JSON dle schématu, nikoli volný text.
+      Obsah dokumentu studenta tak nemůže přepsat instrukce pipeline kroku.
+    </div>
+    <div class="callout warn">
+      <strong>Stavový přechod dokumentu:</strong>
+      <code>pending</code> → <code>processing</code> → <code>completed</code> | <code>partial</code> | <code>failed</code> | <code>conversion_failed</code><br>
+      <code>partial</code>: pipeline doběhla, ale byl vyčerpán tokenový příděl před dokončením všech kroků — nalezené chyby jsou zachovány.
+      <code>conversion_failed</code>: Pandoc nedokázal převést soubor, pipeline se nespustila.
+    </div>
+  </section>
+
+  <!-- =================== TYPY CHYB =================== -->
+  <section id="error-types">
+    <h2>Předdefinované typy chyb</h2>
+    <p>
+      LLM je instruováno kategorizovat nalezené problémy do předdefinovaného seznamu.
+      Pokud narazí na problém, který do žádné kategorie nezapadá, použije <code>other</code>.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Slug</th>
+          <th>Název</th>
+          <th>Popis</th>
+          <th>Příklady</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>missing_section</code></td>
+          <td>Chybějící část</td>
+          <td>Dokument postrádá povinnou sekci</td>
+          <td>Chybí abstrakt, seznam zkratek, závěr</td>
+        </tr>
+        <tr>
+          <td><code>typography</code></td>
+          <td>Typografie</td>
+          <td>Vizuální/formátovací chyby</td>
+          <td>Nejednotné odsazení, špatný font, mezery</td>
+        </tr>
+        <tr>
+          <td><code>citation</code></td>
+          <td>Citace</td>
+          <td>Chyby v citování zdrojů</td>
+          <td>Nekompletní zdroj, špatný styl, chybějící citace</td>
+        </tr>
+        <tr>
+          <td><code>spelling</code></td>
+          <td>Pravopis / gramatika</td>
+          <td>Jazykové chyby</td>
+          <td>Překlepy, špatná shoda, interpunkce</td>
+        </tr>
+        <tr>
+          <td><code>repetition</code></td>
+          <td>Opakování</td>
+          <td>Zbytečné opakování obsahu nebo slov</td>
+          <td>Duplicitní odstavce, fráze opakující se na blízko</td>
+        </tr>
+        <tr>
+          <td><code>contradiction</code></td>
+          <td>Rozpor</td>
+          <td>Texty si vzájemně odporují</td>
+          <td>Různé hodnoty ve dvou místech, konfliktní tvrzení</td>
+        </tr>
+        <tr>
+          <td><code>nonsense</code></td>
+          <td>Nesmysl / nekoherence</td>
+          <td>Text nedává smysl nebo je nelogický</td>
+          <td>Neúplné věty, nedávající logiku argumentace</td>
+        </tr>
+        <tr>
+          <td><code>structure</code></td>
+          <td>Struktura</td>
+          <td>Chyby ve struktuře dokumentu</td>
+          <td>Špatné pořadí sekcí, nevyvážená hloubka nadpisů</td>
+        </tr>
+        <tr>
+          <td><code>style</code></td>
+          <td>Styl</td>
+          <td>Odchylky od akademického stylu</td>
+          <td>Hovorový jazyk, 1. osoba tam kde nemá být</td>
+        </tr>
+        <tr>
+          <td><code>other</code></td>
+          <td>Ostatní</td>
+          <td>LLM nenašlo vhodnou kategorii</td>
+          <td>Dynamicky generovaný popis</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Závažnost chyby</h3>
+    <table>
+      <thead>
+        <tr><th>Hodnota</th><th>Label</th><th>Typické použití</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="sev-critical">critical</span></td><td>Kritická</td><td>Povinná část dokumentu úplně chybí, práce nesplňuje základní požadavky</td></tr>
+        <tr><td><span class="sev-high">high</span></td><td>Závažná</td><td>Zásadní chyba snižující kvalitu práce (špatné citace, velké rozpory)</td></tr>
+        <tr><td><span class="sev-medium">medium</span></td><td>Střední</td><td>Chyby v pravopisu, typografii nebo stylu</td></tr>
+        <tr><td><span class="sev-low">low</span></td><td>Nízká</td><td>Drobné odchylky, kosmetické problémy</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- =================== JSON SCHEMA =================== -->
+  <section id="json-schema">
+    <h2>JSON schéma chyby</h2>
+    <p>
+      Každý krok pipeline musí vrátit JSON v tomto formátu.
+      Backend validuje výstup a odmítne chyby, které schéma nesplňují.
+    </p>
+
+    <h3>Výstup jednoho kroku pipeline (LLM → backend)</h3>
+    <pre><code>{
+  "errors": [
+    {
+      "error_type_slug": "citation",       // z předdefinovaného seznamu, nebo "other"
+      "severity": "high",                  // critical | high | medium | low
+      "char_start": 4820,                  // pozice v Markdown textu
+      "char_end": 4891,
+      "description": "Citace [12] neobsahuje rok vydání ani nakladatele.",
+      "suggested_fix": "Doplňte kompletní bibliografický záznam dle normy ISO 690.",
+      "custom_type_label": null            // vyplnit pouze při error_type_slug = "other"
+    }
+  ]
+}</code></pre>
+
+    <h3>Chyba uložená v DB (GET /errors/{id})</h3>
+    <pre><code>{
+  "id": "uuid-error",
+  "version_id": "uuid-version",
+  "error_type_slug": "citation",
+  "severity": "high",
+  "char_start": 4820,
+  "char_end": 4891,
+  "description": "Citace [12] neobsahuje rok vydání ani nakladatele.",
+  "suggested_fix": "Doplňte kompletní bibliografický záznam dle normy ISO 690.",
+  "previous_error_id": "uuid-old-error",  // odkaz na stejnou chybu z minulé verze
+  "is_resolved": false,                   // true = v předchozí verzi existovala, teď ne
+  "custom_type_label": null,
+  "pipeline_step_id": "uuid-step"         // z jakého kroku chyba pochází
+}</code></pre>
+
+    <div class="callout info">
+      Pole <code>previous_error_id</code> umožňuje UI zobrazit „tuto chybu jsi neopravil/a od verze X".
+      Porovnání probíhá na základě překrývající se lokace v textu a shodného <code>error_type_slug</code>.
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- =================== RATE LIMITING =================== -->
+  <section id="rate-limiting">
+    <h2>Rate limiting</h2>
+    <p>
+      Spotřeba tokenů LLM je sledována per-uživatel. Systém má dva plány s různými příděly.
+      Cílem je motivovat uživatele k upgradu na placený plán, aniž by byl free tier zcela nepoužitelný.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Plán</th><th>Skenů / měsíc</th><th>Priorita fronty</th></tr>
+      </thead>
+      <tbody>
+        <tr class="tier-row-free">
+          <td><span class="tag" style="background:rgba(52,211,153,0.12);color:var(--green);border-color:rgba(52,211,153,0.3);">institutional_free</span></td>
+          <td>5 (TBD po benchmarku)</td>
+          <td>nižší</td>
+        </tr>
+        <tr>
+          <td><span class="tag">Basic</span></td>
+          <td>10 (TBD po benchmarku)</td>
+          <td>střední</td>
+        </tr>
+        <tr class="tier-row-paid">
+          <td><span class="tag" style="background:rgba(108,140,255,0.15);color:var(--accent);">Pro</span></td>
+          <td>50 (TBD po benchmarku)</td>
+          <td>vyšší</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>Konkrétní hodnoty přídělu jsou předmětem dalšího rozhodnutí.</strong>
+      Doporučujeme je nastavit až po prvních real-world testech, kdy bude znám průměrný počet tokenů na analýzu.
+      Orientačně: jedna analýza 50stránkového dokumentu (4 kroky) spotřebuje ~130k input + ~8k output tokenů.
+    </div>
+    <div class="callout">
+      <strong>Dvě oddělené metriky — neměsit je:</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li><strong>Sken</strong> = spuštění pipeline nad jednou <code>DocumentVersion</code>. Toto je <em>primární uživatelský limit</em>.
+          Uložen jako <code>monthly_scan_count INT</code> v tabulce <code>USER</code>, resetován ARQ cron jobem 1. den každého měsíce.
+          Před spuštěním pipeline: atomický <code>UPDATE user SET monthly_scan_count = monthly_scan_count + 1 WHERE monthly_scan_count &lt; scan_budget</code> (jeden SQL příkaz, žádná race condition).
+          Pokud UPDATE nezmění žádný řádek → limit dosažen, pipeline se nespustí.</li>
+        <li><strong>TOKEN_USAGE_EVENT</strong> = cost monitoring pro admina. Každý krok loguje tokeny <em>po dokončení</em>.
+          Uživatel limit tokenů nevidí — pouze procento skenů. Admin vidí reálné náklady per-uživatel.</li>
+        <li>Sloupce <code>daily_token_budget</code> a <code>weekly_token_budget</code> z tabulky <code>USER</code> se <strong>odstraňují</strong> — nahrazuje je <code>monthly_scan_budget INT</code> a <code>monthly_scan_count INT</code>.</li>
+      </ul>
+      <strong>Konkrétní hodnoty budgetu:</strong> nastavit empiricky po benchmarku (viz sekce Institucionální emaily). Orientačně: free = 5 skenů/měsíc, Basic = 10, Pro = 50.
+    </div>
+
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart LR
+    A[Spuštění pipeline] --> B{Dostatek tokenů?}
+    B -->|Ano| C[Krok pipeline]
+    C --> D{Tokeny stále OK?}
+    D -->|Ano| E{Další krok?}
+    E -->|Ano| C
+    E -->|Ne| F[✅ Hotovo]
+    D -->|Ne| G[⚠️ status: partial\ntoken_limit_exceeded\nUložit co bylo nalezeno]
+    B -->|Ne| H[❌ Odmítnutí\nspuštění]
+      </div>
+    </div>
+
+    <h3>Co uživatel vidí</h3>
+    <p>Endpoint <code>GET /users/me/usage</code> vrací pouze <strong>procento využití</strong>, nikoli absolutní čísla tokenů.</p>
+    <pre><code>// Příklad UI hlášky (generuje frontend):
+"Využito 68 % denního přídělu. Obnoví se zítra v 00:00."</code></pre>
+  </section>
+
+  <!-- =================== ACCESS CONTROL =================== -->
+  <section id="access-control">
+    <h2>Řízení přístupu</h2>
+    <p>
+      Každý datový objekt je vázán na uživatele přes <code>user_id</code>.
+      Backend ověřuje vlastnictví na každém endpointu — student nemůže přistupovat k projektům jiného studenta.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Zdroj</th><th>Student (vlastník)</th><th>Student (cizí)</th><th>Superadmin</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vlastní projekty</td><td>✅ CRUD</td><td>❌ 403</td><td>✅ read</td></tr>
+        <tr><td>Verze dokumentů</td><td>✅ CRUD</td><td>❌ 403</td><td>✅ read</td></tr>
+        <tr><td>Chyby</td><td>✅ read</td><td>❌ 403</td><td>✅ read</td></tr>
+        <tr><td>Pipeline kroky</td><td>✅ read</td><td>✅ read</td><td>✅ CRUD</td></tr>
+        <tr><td>Typy chyb</td><td>✅ read</td><td>✅ read</td><td>✅ CRUD</td></tr>
+        <tr><td>Správa uživatelů</td><td>❌ 403</td><td>❌ 403</td><td>✅ CRUD</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      Doporučujeme implementovat kontrolu přístupu jako <strong>FastAPI dependency</strong>
+      (<code>Depends(get_current_user)</code> + <code>Depends(require_admin)</code>),
+      aby bylo řízení přístupu konzistentní a nezdvojené napříč endpointy.
+    </div>
+    <div class="callout">
+      <strong>Admin audit log:</strong>
+      Každá akce superadmina (změna promptu pipeline kroku, úprava uživatele, smazání dat) se automaticky loguje
+      do tabulky <code>ADMIN_AUDIT_LOG</code> přes FastAPI middleware / dependency.
+      Log je read-only pro adminy přes <code>GET /admin/audit-log</code>.
+    </div>
+
+    <h3>Příklad FastAPI dependency (pseudokód)</h3>
+    <pre><code>async def get_project_for_user(
+    project_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Project:
+    project = db.get(Project, project_id)
+    if not project or project.user_id != current_user.id:
+        raise HTTPException(status_code=403)
+    return project
+
+@router.get("/projects/{project_id}/versions")
+async def list_versions(project: Project = Depends(get_project_for_user)):
+    ...</code></pre>
+  </section>
+
+  <hr>
+
+  <!-- =================== INSTITUCIONÁLNÍ EMAILY =================== -->
+  <section id="email-verification">
+    <h2>Institucionální email — free tier bez zneužití</h2>
+    <p>
+      Free kredity jsou dostupné <strong>pouze pro ověřené institucionální emaily</strong> (např. <code>@tul.cz</code>).
+      Každá univerzita má vlastní emailovou doménu, takže multi-account abuse je strukturálně nemožný —
+      student má vždy jen jeden školní email. Běžné free emaily (<code>gmail.com</code>, <code>seznam.cz</code> apod.)
+      free kredity nedostanou a musí přejít na placený plán.
+    </p>
+
+    <h3>Whitelist domén — datový model</h3>
+    <p>
+      Povolené domény jsou uloženy v tabulce <code>ALLOWED_DOMAIN</code>, kterou spravuje superadmin.
+      Přidání nové univerzity = jeden řádek v tabulce, žádný deploy.
+    </p>
+    <pre><code>ALLOWED_DOMAIN
+  id                    UUID PK
+  domain                VARCHAR(100) UNIQUE   -- "tul.cz", "cvut.cz", "muni.cz"
+  university_name       VARCHAR(200)          -- "Technická univerzita v Liberci"
+  free_analyses_per_month  INT DEFAULT 1      -- počet analýz zdarma
+  enabled               BOOL DEFAULT TRUE
+  created_at            TIMESTAMPTZ</code></pre>
+
+    <h3>Logika při registraci</h3>
+    <div class="pipeline-step">
+      <div class="step-num">1</div>
+      <div>Uživatel zadá email → systém extrahuje doménu (<code>tul.cz</code>).</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">2</div>
+      <div>Backend zkontroluje <code>ALLOWED_DOMAIN</code>. Nalezena shoda → <code>User.tier = "institutional_free"</code>, <code>free_analyses_per_month</code> se nastaví dle záznamu. Nenalezena → <code>User.tier = "unverified"</code>, bez free kreditů.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">3</div>
+      <div>Na školní email se odešle <strong>verifikační odkaz</strong> (UUID token, platnost 24 h). Dokud uživatel email nepotvrdí, tier zůstává <code>unverified</code> a spuštění pipeline je blokováno.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">4</div>
+      <div>Po kliknutí na odkaz → <code>email_verified = TRUE</code>, tier se aktivuje. Uživatel může spouštět analýzy.</div>
+    </div>
+
+    <h3>Tiery uživatele</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>Podmínka</th>
+          <th>Skenů / měsíc</th>
+          <th>LLM model</th>
+          <th>Zobrazené výsledky</th>
+          <th>Náklad / měsíc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag">unverified</span></td>
+          <td>gmail.com, seznam.cz apod.</td>
+          <td>0</td>
+          <td>—</td>
+          <td>—</td>
+          <td>0 Kč</td>
+        </tr>
+        <tr>
+          <td><span class="tag" style="background:rgba(52,211,153,0.12);color:var(--green);border-color:rgba(52,211,153,0.3);">institutional_free</span></td>
+          <td>Ověřený @tul.cz, @cvut.cz, …</td>
+          <td><strong>5× / měsíc</strong></td>
+          <td>Gemini 3.1 Flash-Lite</td>
+          <td><strong>max 3 chyby / sken</strong> + počítadlo skrytých</td>
+          <td>~5 Kč</td>
+        </tr>
+        <tr class="tier-row-paid">
+          <td><span class="tag" style="background:rgba(108,140,255,0.15);color:var(--accent);border-color:rgba(108,140,255,0.35);">pro</span></td>
+          <td>Aktivní předplatné (59 / 99 Kč)</td>
+          <td>~10–15×</td>
+          <td>Gemini 3 Flash</td>
+          <td><strong>všechny chyby</strong> + kontext + návrh opravy</td>
+          <td>~20–30 Kč</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      ⚠️ <strong>WIP — parametry neověřeny na reálných datech.</strong>
+      Čísla „5 skenů zdarma" a „3 chyby / sken" jsou předběžné odhady.
+      Před finalizací je nutné provést benchmark na min. 5–10 skutečných BP:
+      zjistit průměrný počet chyb, distribuci dle kategorie a závažnosti,
+      a porovnat výstup Flash-Lite vs. Gemini 3 Flash na stejném dokumentu.
+      Parametry free tieru se nastaví empiricky na základě výsledků.
+    </div>
+
+    <h3>Freemium logika — teaser místo truncation</h3>
+    <p>
+      Kritický designový princip: free tier <strong>neskrývá chyby náhodně</strong>, ale zobrazuje přesně 3 + ukáže počítadlo zbytku.
+      Student vidí, že problém existuje, ale nezná lokaci ani detail — to je silnější motivace než „máš X skenů zdarma".
+    </p>
+
+    <div class="card" style="border-left: 3px solid var(--yellow);">
+      <h4 style="color:var(--yellow);margin-bottom:10px;">Příklad výstupu free skenování</h4>
+      <pre style="margin:0;font-size:12.5px;"><code>✅ Sken dokončen — nalezeno 17 chyb
+
+Zobrazuji 3 z 17:
+
+  [CITACE] str. 12 — chybí rok vydání u zdroje "Novák et al."
+  [FORMÁT] str. 4  — nadpis 2. úrovně není v souladu s normou ČSN
+  [JAZYK]  str. 27 — pravděpodobná gramatická chyba ve větě "..."
+
+  + 14 dalších chyb skryto — odemkni Pro pro úplný přehled</code></pre>
+    </div>
+
+    <div class="callout warn">
+      <strong>Proč nezobrazovat všechny chyby zdarma?</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li>5 skenů × „zobraz 3" = student vidí max 15 chyb. Průměrná BP má 20–60 chyb napříč kategoriemi — student stále neví, zda má vše opraveno.</li>
+        <li>Nestačí opravit 3 viditelné — skryté chyby dále existují. To vytváří přirozený tlak upgradovat.</li>
+        <li>Free model (Flash-Lite) navíc generuje stručnější, méně kontextuální popisy → kvalitativní rozdíl je viditelný i na těch 3 chybách.</li>
+      </ul>
+    </div>
+
+    <h3>Kvalitativní rozdíl mezi modely (stejná chyba, jiný tier)</h3>
+    <table>
+      <thead>
+        <tr><th>Aspekt</th><th>institutional_free (Flash-Lite)</th><th>Pro (Gemini 3 Flash)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Popis chyby</td>
+          <td>„Chybí rok vydání u zdroje na str. 12."</td>
+          <td>„Na str. 12 citujete Novák et al. bez roku vydání. Dle normy ISO 690 je rok povinný. Doplňte: (Novák et al., 2019)."</td>
+        </tr>
+        <tr>
+          <td>Počet chyb zobrazen</td>
+          <td>3 z nalezených X</td>
+          <td>Všechny nalezené</td>
+        </tr>
+        <tr>
+          <td>Návrh opravy</td>
+          <td>❌</td>
+          <td>✅ konkrétní text</td>
+        </tr>
+        <tr>
+          <td>Závažnost (severity)</td>
+          <td>❌ skryta</td>
+          <td>✅ critical / high / medium / low</td>
+        </tr>
+        <tr>
+          <td>Pipeline kroky</td>
+          <td>všechny (detekce ano, detail ne)</td>
+          <td>všechny + plný výstup</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <strong>Implementace v API:</strong>
+      <code>FoundError</code> záznamy se vždy uloží kompletní. Filtrování na 3 chyby se provádí až v response serializeru na základě <code>user.tier</code> — data nejsou zahozena, pouze nezobrazena. Upgrade na Pro okamžitě odemkne všechny existující výsledky bez nutnosti nového skenování.
+    </div>
+
+    <div class="callout warn">
+      <strong>Reset free kreditu:</strong> Kredit (5 skenů) se obnovuje 1. den každého měsíce (UTC). Nevyužitý kredit <em>nepřechází</em> do dalšího měsíce. Implementace: <code>TOKEN_USAGE_EVENT</code> s <code>period = YYYY-MM</code> — agregace přes <code>GROUP BY user_id, period</code>.
+    </div>
+
+    <h3>Endpoint pro správu domén (superadmin)</h3>
+    <div class="endpoint-group">
+      <div class="endpoint-row">
+        <span class="badge GET">GET</span>
+        <span class="path">/admin/allowed-domains</span>
+        <span class="desc">Seznam všech povolených domén</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge POST">POST</span>
+        <span class="path">/admin/allowed-domains</span>
+        <span class="desc">Přidat novou doménu / univerzitu</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge PATCH">PATCH</span>
+        <span class="path">/admin/allowed-domains/<span class="param">{id}</span></span>
+        <span class="desc">Změnit limit nebo vypnout doménu</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="badge DELETE">DELETE</span>
+        <span class="path">/admin/allowed-domains/<span class="param">{id}</span></span>
+        <span class="desc">Odebrat doménu z whitelistu</span>
+        <span class="auth-tag tag-admin">admin</span>
+      </div>
+    </div>
+
+    <h3>Rozšíření na další univerzity</h3>
+    <p>
+      Přidání nové školy nevyžaduje změnu kódu — stačí vložit řádek do <code>ALLOWED_DOMAIN</code>.
+      Každá doména může mít vlastní <code>free_analyses_per_month</code> (např. partnerská univerzita dostane 2× místo 1×).
+    </p>
+    <pre><code>-- Příklad: rozšíření na ČVUT a MUNI
+INSERT INTO allowed_domain (domain, university_name, free_analyses_per_month)
+VALUES
+  ('cvut.cz',  'České vysoké učení technické v Praze',  1),
+  ('muni.cz',  'Masarykova univerzita',                  1),
+  ('vut.cz',   'Vysoké učení technické v Brně',          1),
+  ('zcu.cz',   'Západočeská univerzita v Plzni',         1);</code></pre>
+  </section>
+
+  <hr>
+
+  <!-- =================== ODHAD NÁKLADŮ =================== -->
+  <section id="cost-estimate">
+    <h2>Odhad nákladů na LLM</h2>
+    <p>
+      Kalkulace provozních nákladů na LLM volání pro jeden účet.
+      Kurs: <strong>1 USD = 23 Kč</strong>. Ceny platné k 2026-04.
+    </p>
+
+    <h3>Tokenová spotřeba na jednu analýzu (jednu verzi dokumentu)</h3>
+    <table>
+      <thead>
+        <tr><th>Parametr</th><th>Hodnota</th><th>Poznámka</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Délka dokumentu</td><td>~50 stran</td><td>Max povolená velikost</td></tr>
+        <tr><td>Tokeny po konverzi (Markdown)</td><td>~30 000</td><td>Průměrná 50stránková BP</td></tr>
+        <tr><td>System prompt per krok</td><td>~2 000</td><td>Instrukce + JSON schéma</td></tr>
+        <tr><td>Input per krok celkem</td><td>~32 000 tokenů</td><td>Dokument + system prompt</td></tr>
+        <tr><td>Output per krok</td><td>~2 000 tokenů</td><td>JSON seznam chyb</td></tr>
+        <tr><td>Počet kroků pipeline</td><td>4 (průměr)</td><td>3–5 dle fakulty</td></tr>
+        <tr><td><strong>Celkem input / analýza</strong></td><td><strong>128 000 tokenů</strong></td><td>4 × 32 000</td></tr>
+        <tr><td><strong>Celkem output / analýza</strong></td><td><strong>8 000 tokenů</strong></td><td>4 × 2 000</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Náklady na uživatele / měsíc (model DeepSeek-V3, doporučeno)</h3>
+    <table>
+      <thead>
+        <tr><th>Plán</th><th>Podmínka</th><th>Analýzy / měsíc</th><th>Náklady LLM / měsíc</th><th>Cena předplatného</th><th>Marže</th></tr>
+      </thead>
+      <tbody>
+        <tr class="tier-row-free">
+          <td><span class="tag" style="background:rgba(52,211,153,0.12);color:var(--green);border-color:rgba(52,211,153,0.3);">institutional_free</span></td>
+          <td>@tul.cz a jiné whitelisted domény</td>
+          <td>1</td>
+          <td>~0.90 Kč</td>
+          <td>zdarma</td>
+          <td style="color:var(--text-muted);">loss leader</td>
+        </tr>
+        <tr>
+          <td><span class="tag">unverified / ostatní</span></td>
+          <td>gmail.com, seznam.cz apod.</td>
+          <td>0</td>
+          <td>0 Kč</td>
+          <td>zdarma (bez kreditů)</td>
+          <td style="color:var(--green);">—</td>
+        </tr>
+        <tr class="tier-row-paid">
+          <td><span class="tag" style="background:rgba(108,140,255,0.15);color:var(--accent);border-color:rgba(108,140,255,0.35);">Pro</span></td>
+          <td>Aktivní předplatné</td>
+          <td>~10</td>
+          <td>~9 Kč</td>
+          <td>59 Kč nebo 99 Kč</td>
+          <td style="color:var(--green);">~85 %</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>Claude 3.5 Sonnet je nevhodný pro tuto cenovou hladinu.</strong>
+      Při předplatném 59–99 Kč/měsíc a LLM nákladech 35–115 Kč/uživatel/měsíc je model ztrátový.
+      Viz sekce <a href="#model-comparison">Srovnání modelů</a> — existují alternativy 15–50× levnější se srovnatelným výkonem.
+    </div>
+
+    <div class="callout">
+      <strong>Kontrolní body:</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li>Před každým spuštěním pipeline: zkontrolovat zbývající tokenový příděl uživatele.</li>
+        <li>Po každém kroku: logovat spotřebu do <code>TOKEN_USAGE_EVENT</code> a průběžně kontrolovat limit.</li>
+        <li>Při překročení limitu uprostřed pipeline: přejít na <code>status: partial</code>, zachovat nalezené chyby.</li>
+        <li>Měsíční agregace nákladů per-uživatel dostupná adminem přes <code>GET /admin/users/{id}</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- =================== SROVNÁNÍ MODELŮ =================== -->
+  <section id="model-comparison">
+    <h2>Srovnání SOTA modelů (výkon / cena)</h2>
+    <p>
+      Přehled nejlepších dostupných LLM modelů k dubnu 2026. Zdroje: Arena.AI leaderboard (Elo),
+      GPQA Diamond a SWE-bench Verified jako proxy pro reasoning a kódování.
+      Ceny jsou za 1 milion tokenů přes API.
+    </p>
+
+    <h3>Vstupní předpoklady pro BP Checker</h3>
+    <pre><code>Jedna analýza (4 kroky pipeline):
+  Input celkem:   128 000 tokenů  (4 × 32 000)
+  Output celkem:    8 000 tokenů  (4 × 2 000)
+
+Kurs: 1 USD = 23 Kč</code></pre>
+
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">
+      Seřazeno dle ceny / analýza. Pouze modely vydané v H2 2025 – Q1 2026. Zdroj benchmarků: llm-stats.com (2026-04).
+      <br>Výpočet: 128 000 input tokenů + 8 000 output tokenů (4 kroky pipeline × průměrná BP).
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Firma</th>
+          <th>Vydáno</th>
+          <th>GPQA</th>
+          <th>SWE-bench</th>
+          <th>Input $/M</th>
+          <th>Output $/M</th>
+          <th>Cena / analýza</th>
+          <th>Cena / analýza Kč</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Gemini 3.1 Flash-Lite</strong></td>
+          <td>Google</td>
+          <td>Mar 2026</td>
+          <td>86.9 %</td>
+          <td>—</td>
+          <td>$0.25</td>
+          <td>$1.50</td>
+          <td><span class="sev-low">$0.044</span></td>
+          <td><span class="sev-low">~1.0 Kč</span></td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5 mini</strong></td>
+          <td>OpenAI</td>
+          <td>Aug 2025</td>
+          <td>82.3 %</td>
+          <td>—</td>
+          <td>$0.25</td>
+          <td>$2.00</td>
+          <td><span class="sev-low">$0.048</span></td>
+          <td><span class="sev-low">~1.1 Kč</span></td>
+        </tr>
+        <tr>
+          <td><strong>MiniMax M2.5</strong> <span class="tag">open</span></td>
+          <td>MiniMax 🇨🇳</td>
+          <td>Feb 2026</td>
+          <td>—</td>
+          <td>76.3 %</td>
+          <td>$0.30</td>
+          <td>$1.20</td>
+          <td><span class="sev-low">$0.048</span></td>
+          <td><span class="sev-low">~1.1 Kč</span></td>
+        </tr>
+        <tr>
+          <td><strong>Qwen3.5-122B</strong> <span class="tag">open</span></td>
+          <td>Alibaba 🇨🇳</td>
+          <td>Feb 2026</td>
+          <td>86.6 %</td>
+          <td>72.0 %</td>
+          <td>$0.40</td>
+          <td>$3.20</td>
+          <td>$0.077</td>
+          <td>~1.8 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 3 Flash</strong></td>
+          <td>Google</td>
+          <td>Dec 2025</td>
+          <td>90.4 %</td>
+          <td>78.0 %</td>
+          <td>$0.50</td>
+          <td>$3.00</td>
+          <td>$0.088</td>
+          <td>~2.0 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>GLM-4.7</strong> <span class="tag">open</span></td>
+          <td>Zhipu AI 🇨🇳</td>
+          <td>Dec 2025</td>
+          <td>85.7 %</td>
+          <td>73.8 %</td>
+          <td>$0.60</td>
+          <td>$2.20</td>
+          <td>$0.094</td>
+          <td>~2.2 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>Kimi K2.5</strong> <span class="tag">open</span></td>
+          <td>Moonshot AI 🇨🇳</td>
+          <td>Jan 2026</td>
+          <td>87.6 %</td>
+          <td>76.8 %</td>
+          <td>$0.60</td>
+          <td>$2.50</td>
+          <td>$0.097</td>
+          <td>~2.2 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>Qwen3.5-397B</strong> <span class="tag">open</span></td>
+          <td>Alibaba 🇨🇳</td>
+          <td>Feb 2026</td>
+          <td>88.4 %</td>
+          <td>76.4 %</td>
+          <td>$0.60</td>
+          <td>$3.60</td>
+          <td>$0.106</td>
+          <td>~2.4 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>GLM-5</strong> <span class="tag">open</span></td>
+          <td>Zhipu AI 🇨🇳</td>
+          <td>Feb 2026</td>
+          <td>—</td>
+          <td>77.8 %</td>
+          <td>$1.00</td>
+          <td>$3.20</td>
+          <td>$0.154</td>
+          <td>~3.5 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5 High / 5.1</strong></td>
+          <td>OpenAI</td>
+          <td>Nov 2025</td>
+          <td>88.1 %</td>
+          <td>—</td>
+          <td>$1.25</td>
+          <td>$10.00</td>
+          <td>$0.240</td>
+          <td>~5.5 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5.2</strong></td>
+          <td>OpenAI</td>
+          <td>Dec 2025</td>
+          <td>92.4 %</td>
+          <td>80.0 %</td>
+          <td>$1.75</td>
+          <td>$14.00</td>
+          <td>$0.336</td>
+          <td>~7.7 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 3.1 Pro</strong></td>
+          <td>Google</td>
+          <td>Feb 2026</td>
+          <td>94.3 %</td>
+          <td>80.6 %</td>
+          <td>$2.50</td>
+          <td>$15.00</td>
+          <td>$0.440</td>
+          <td>~10.1 Kč</td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5.4</strong></td>
+          <td>OpenAI</td>
+          <td>Mar 2026</td>
+          <td>92.8 %</td>
+          <td>—</td>
+          <td>$2.50</td>
+          <td>$15.00</td>
+          <td>$0.440</td>
+          <td>~10.1 Kč</td>
+        </tr>
+        <tr>
+          <td><del>Claude Sonnet 4.5/4.6</del></td>
+          <td>Anthropic</td>
+          <td>2025–2026</td>
+          <td>83–90 %</td>
+          <td>79.6 %</td>
+          <td>$3.00</td>
+          <td>$15.00</td>
+          <td><span class="sev-critical">$0.504</span></td>
+          <td><span class="sev-critical">~11.6 Kč</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <!-- =================== PŘEDPLATNÉ VS. NÁKLADY =================== -->
+  <section id="subscription-fit">
+    <h2>Plány a náklady na LLM</h2>
+
+    <h3>Pojmenování plánů</h3>
+    <p>
+      Pro MVP používáme generické názvy <strong>Basic</strong> a <strong>Pro</strong>.
+      Marketingové pojmenování (např. „Finišer" / „Průvodce BP") se nastaví až na základě zpětné vazby od prvních uživatelů —
+      nejlepší názvy vycházejí ze slov, která studenti sami používají, ne z předem vymyšleného framingu.
+    </p>
+    <table>
+      <thead>
+        <tr><th>Název</th><th>Cena</th><th>Cílová skupina</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag" style="background:rgba(52,211,153,0.12);color:var(--green);border-color:rgba(52,211,153,0.3);">institutional_free</span></td>
+          <td>zdarma</td>
+          <td>Každý s @tul.cz apod. — teaser, navnadění</td>
+        </tr>
+        <tr>
+          <td><span class="tag">Basic</span></td>
+          <td>59 Kč / měsíc</td>
+          <td>Student, který příležitostně kontroluje — 10 skenů/měsíc</td>
+        </tr>
+        <tr class="tier-row-paid">
+          <td><span class="tag" style="background:rgba(108,140,255,0.15);color:var(--accent);border-color:rgba(108,140,255,0.35);">Pro</span></td>
+          <td>199 Kč / měsíc</td>
+          <td>Student ve finální fázi nebo vedoucí práce — 50 skenů/měsíc</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      Název „Basic" a „Pro" jsou placeholdery. <strong>Nepředbíhat s marketingovými názvy</strong> před validací s reálnými uživateli.
+    </div>
+
+    <p>
+      Předpoklad: <strong>~65 % marže</strong> na LLM nákladech (zbytek pokryje Stripe + rezerva).
+      Typický student potřebuje <strong>3–5 analýz měsíčně</strong>, ve finální fázi více.
+    </p>
+
+    <p style="font-size:13px;color:var(--text-muted);">
+      LLM budget = 50 % výnosů → <strong>29.5 Kč</strong> @ 59 Kč plánu / <strong>49.5 Kč</strong> @ 99 Kč plánu.
+      Typický student: 3–5 analýz/měsíc. Modely pouze H2 2025 – Q1 2026.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Kč / analýza</th>
+          <th>GPQA</th>
+          <th>SWE-bench</th>
+          <th>Analýzy @ 59 Kč</th>
+          <th>Analýzy @ 99 Kč</th>
+          <th>Hodnocení</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Gemini 3.1 Flash-Lite</strong></td>
+          <td><span class="sev-low">~1.0 Kč</span></td>
+          <td>86.9 %</td>
+          <td>—</td>
+          <td><strong>29×</strong></td>
+          <td><strong>49×</strong></td>
+          <td><span class="sev-low">Ideální pro free tier (≤1 Kč)</span></td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5 mini</strong></td>
+          <td><span class="sev-low">~1.1 Kč</span></td>
+          <td>82.3 %</td>
+          <td>—</td>
+          <td>27×</td>
+          <td>45×</td>
+          <td><span class="sev-low">Alternativa free tieru</span></td>
+        </tr>
+        <tr>
+          <td><strong>MiniMax M2.5</strong></td>
+          <td><span class="sev-low">~1.1 Kč</span></td>
+          <td>—</td>
+          <td>76.3 %</td>
+          <td>27×</td>
+          <td>45×</td>
+          <td>Silný SWE, čínský open-source</td>
+        </tr>
+        <tr>
+          <td><strong>Qwen3.5-122B</strong></td>
+          <td>~1.8 Kč</td>
+          <td>86.6 %</td>
+          <td>72.0 %</td>
+          <td>16×</td>
+          <td>27×</td>
+          <td>Open-weight, self-host = zadarmo</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 3 Flash</strong></td>
+          <td>~2.0 Kč</td>
+          <td>90.4 %</td>
+          <td>78.0 %</td>
+          <td>15×</td>
+          <td>25×</td>
+          <td><span class="sev-low">Doporučeno Pro tier — nejlepší poměr</span></td>
+        </tr>
+        <tr>
+          <td><strong>Kimi K2.5</strong></td>
+          <td>~2.2 Kč</td>
+          <td>87.6 %</td>
+          <td>76.8 %</td>
+          <td>13×</td>
+          <td>22×</td>
+          <td>Silný open-source alternativa</td>
+        </tr>
+        <tr>
+          <td><strong>Qwen3.5-397B</strong></td>
+          <td>~2.4 Kč</td>
+          <td>88.4 %</td>
+          <td>76.4 %</td>
+          <td>12×</td>
+          <td>21×</td>
+          <td>Největší Qwen model, výborný výkon</td>
+        </tr>
+        <tr>
+          <td><strong>GLM-5</strong></td>
+          <td>~3.5 Kč</td>
+          <td>—</td>
+          <td>77.8 %</td>
+          <td>8×</td>
+          <td>14×</td>
+          <td>Přijatelné, dobrý SWE výkon</td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5 High / 5.1</strong></td>
+          <td>~5.5 Kč</td>
+          <td>88.1 %</td>
+          <td>—</td>
+          <td>5×</td>
+          <td>9×</td>
+          <td><span class="sev-medium">Na hranici rentability</span></td>
+        </tr>
+        <tr>
+          <td><strong>GPT-5.2</strong></td>
+          <td>~7.7 Kč</td>
+          <td>92.4 %</td>
+          <td>80.0 %</td>
+          <td>4×</td>
+          <td>6×</td>
+          <td><span class="sev-medium">Drahé, lepší výkon nezaplatí rozdíl</span></td>
+        </tr>
+        <tr>
+          <td><del>Gemini 3.1 Pro</del></td>
+          <td><span class="sev-critical">~10.1 Kč</span></td>
+          <td>94.3 %</td>
+          <td>80.6 %</td>
+          <td><span class="sev-critical">3×</span></td>
+          <td><span class="sev-critical">5×</span></td>
+          <td><span class="sev-critical">Nevhodné — ztrátové</span></td>
+        </tr>
+        <tr>
+          <td><del>Claude Sonnet 4.5/4.6</del></td>
+          <td><span class="sev-critical">~11.6 Kč</span></td>
+          <td>83–90 %</td>
+          <td>79.6 %</td>
+          <td><span class="sev-critical">2.5×</span></td>
+          <td><span class="sev-critical">4×</span></td>
+          <td><span class="sev-critical">Nevhodné — ztrátové</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <strong>Doporučená strategie pro MVP:</strong>
+      <ul style="margin: 8px 0 0 18px; font-size: 13.5px;">
+        <li><strong>Institutional free tier (@tul.cz apod.):</strong> <strong>Gemini 3.1 Flash-Lite</strong> (~1.0 Kč/analýza) — 1 analýza zdarma/měsíc, náklad přesně na hranici 1 Kč, GPQA 86.9 %.</li>
+        <li><strong>Pro tier (59 Kč / 99 Kč):</strong> <strong>Gemini 3 Flash</strong> (~2.0 Kč, GPQA 90.4 %, SWE 78 %) — 15 analýz v budgetu 59 Kč, marže ~86 %.</li>
+        <li><strong>Odhadované reálné náklady na aktivního Pro uživatele:</strong> 5 analýz × 2.0 Kč = <strong>10 Kč/měsíc</strong> při 59 Kč příjmu = marže 83 %.</li>
+      </ul>
+    </div>
+
+    <div class="callout warn">
+      <strong>Hybridní přístup (Free vs. Pro diferenciace):</strong>
+      Free institutional tier: <strong>Gemini 3.1 Flash-Lite</strong>, 1× analýza = ~1 Kč náklad (loss leader, minimální ztráta).
+      Pro tier: <strong>Gemini 3 Flash</strong> pro standardní kroky + volitelně <strong>Qwen3.5-397B</strong> pro náročnější reasoning kroky (citace, koherence) = průměr ~2.2 Kč/analýzu.
+      Při 5 analýzách/měsíc → ~11 Kč nákladů při 59 Kč příjmu = <strong>marže ~81 %</strong>.
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#1a1d27',
+      primaryColor: '#2e3348',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#6c8cff',
+      lineColor: '#4a5568',
+      secondaryColor: '#222638',
+      tertiaryColor: '#141720',
+      edgeLabelBackground: '#1a1d27',
+      clusterBkg: '#1a1d27',
+      titleColor: '#e2e8f0',
+      fontFamily: 'Inter, Segoe UI, system-ui, sans-serif',
+    },
+    flowchart: { curve: 'basis' },
+    sequence: { mirrorActors: false }
+  });
+
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

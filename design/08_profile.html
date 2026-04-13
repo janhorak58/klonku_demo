@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku — Profil</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+    background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-left { display: flex; align-items: center; gap: 32px; }
+  .logo { display: flex; align-items: center; gap: 2px; text-decoration: none; }
+  .logo-text { font-family: 'Libre Baskerville', serif; font-weight: 700; font-size: 19px; color: var(--dark); letter-spacing: -0.02em; }
+  .logo-dot { width: 6px; height: 6px; background: var(--salmon); border-radius: 50%; margin-top: 6px; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mid);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .nav-link:hover { background: var(--salmon-light); color: var(--dark); }
+  .nav-link.active { background: var(--salmon-light); color: var(--salmon); }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .tier-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: rgba(59,140,110,0.1);
+    color: var(--accent-green);
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--salmon); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+
+  .main {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 44px 40px 88px;
+  }
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .page-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .page-header p {
+    font-size: 15px;
+    color: var(--mid);
+    font-weight: 300;
+    line-height: 1.55;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    background: var(--salmon);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary:hover { background: #C4512F; }
+
+  .system-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 20px;
+    margin-bottom: 22px;
+    background: white;
+    border: 1px solid rgba(59,140,110,0.22);
+    border-left: 4px solid var(--accent-green);
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(28,20,16,0.04);
+  }
+  .system-notice-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(59,140,110,0.12);
+    color: var(--accent-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .system-notice-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .system-notice-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 4px;
+    line-height: 1.35;
+  }
+  .system-notice-text {
+    font-size: 14px;
+    color: var(--mid);
+    line-height: 1.55;
+  }
+
+  .profile-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 22px;
+  }
+  .profile-side,
+  .content-card {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 14px;
+    box-shadow: 0 3px 18px rgba(28,20,16,0.04);
+  }
+  .profile-side {
+    padding: 26px 24px;
+    align-self: start;
+    position: sticky;
+    top: 88px;
+  }
+  .profile-hero {
+    text-align: center;
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(238,196,179,0.45);
+    margin-bottom: 20px;
+  }
+  .hero-avatar {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--salmon), #C4512F);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 30px;
+    font-weight: 700;
+    font-family: 'Libre Baskerville', serif;
+  }
+  .profile-hero h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .profile-hero p {
+    font-size: 15px;
+    color: var(--mid);
+    line-height: 1.5;
+  }
+  .side-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--mid);
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(238,196,179,0.35);
+  }
+  .meta-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .meta-row strong {
+    color: var(--dark);
+    font-weight: 600;
+    text-align: right;
+  }
+  .usage-card {
+    margin-top: 18px;
+    padding: 16px;
+    background: #FFFDFC;
+    border: 1px dashed var(--salmon-mid);
+    border-radius: 12px;
+  }
+  .usage-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .usage-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--salmon-light);
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .usage-bar-fill {
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-green), #4BAA88);
+  }
+  .usage-card p {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.5;
+  }
+
+  .content-stack {
+    display: grid;
+    gap: 18px;
+  }
+  .content-card {
+    padding: 24px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+  .card-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .card-header p {
+    font-size: 13px;
+    color: var(--light);
+    line-height: 1.45;
+  }
+  .btn-link {
+    font-size: 13px;
+    color: var(--salmon);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .btn-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field.wide { grid-column: 1 / -1; }
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .field-value {
+    min-height: 48px;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #FFFDFC;
+    font-size: 15px;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+  }
+
+  .plan-card {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 18px;
+    align-items: stretch;
+  }
+  .plan-box {
+    border: 1px solid var(--salmon-mid);
+    border-radius: 12px;
+    padding: 20px;
+    background: #FFFDFC;
+  }
+  .plan-box.current {
+    background: linear-gradient(135deg, #FFFDFC, var(--salmon-light));
+  }
+  .plan-box h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .plan-box p {
+    font-size: 14px;
+    color: var(--mid);
+    line-height: 1.55;
+    margin-bottom: 12px;
+  }
+  .feature-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .feature-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 16px;
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    color: var(--mid);
+  }
+
+  .prefs-list {
+    display: grid;
+    gap: 12px;
+  }
+  .pref-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(238,196,179,0.4);
+  }
+  .pref-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .pref-row:first-child { padding-top: 0; }
+  .pref-text strong {
+    display: block;
+    font-size: 14px;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+  .pref-text span {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.45;
+  }
+  .toggle {
+    width: 48px;
+    height: 28px;
+    border-radius: 999px;
+    background: #EADBD2;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 4px rgba(28,20,16,0.10);
+  }
+  .toggle.active {
+    background: rgba(59,140,110,0.28);
+  }
+  .toggle.active::after {
+    left: 24px;
+  }
+
+  @media (max-width: 980px) {
+    .profile-layout { grid-template-columns: 1fr; }
+    .profile-side { position: static; }
+    .plan-card { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 1500px) {
+    .main { max-width: 1440px; }
+    .profile-layout { grid-template-columns: 400px 1fr; gap: 24px; }
+    .content-card { padding: 28px; }
+  }
+  @media (max-width: 720px) {
+    .navbar, .main { padding-left: 20px; padding-right: 20px; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .field-grid { grid-template-columns: 1fr; }
+    .nav-right { gap: 10px; }
+    .tier-badge { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="#" class="logo"><span class="logo-text">Klonku</span><span class="logo-dot"></span></a>
+    <div class="nav-links">
+      <a href="03_dashboard.html" class="nav-link">Projekty</a>
+      <a href="08_profile.html" class="nav-link active">Profil</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="tier-badge">Akademický tarif Free</span>
+    <div class="avatar">JN</div>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="page-header">
+    <div>
+      <h1>Můj profil</h1>
+      <p>Správa účtu, fakultních údajů, limitů a preferencí notifikací v jednotném rozhraní.</p>
+    </div>
+    <button class="btn-primary">Uložit změny</button>
+  </div>
+
+  <div class="system-notice">
+    <div class="system-notice-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <div>
+      <div class="system-notice-title">Změny byly uloženy.</div>
+      <div class="system-notice-text">Aktualizovali jsme váš profil i nastavení oznámení. Nové volby se použijí při další analýze a při odesílání systémových e-mailů.</div>
+    </div>
+  </div>
+
+  <div class="profile-layout">
+    <aside class="profile-side">
+      <div class="profile-hero">
+        <div class="hero-avatar">JN</div>
+        <h2>Jan Novák</h2>
+        <p>Student Fakulty mechatroniky, informatiky a mezioborových studií</p>
+      </div>
+
+      <div class="side-meta">
+        <div class="meta-row"><span>E-mail</span><strong>jan.novak@tul.cz</strong></div>
+        <div class="meta-row"><span>Fakulta</span><strong>FM TUL</strong></div>
+        <div class="meta-row"><span>Tarif</span><strong>Free</strong></div>
+        <div class="meta-row"><span>Aktivní od</span><strong>03/2026</strong></div>
+      </div>
+
+      <div class="usage-card">
+        <h3>Měsíční limit skenování</h3>
+        <div class="usage-bar"><div class="usage-bar-fill"></div></div>
+        <p>Využito 3 z 5 kontrol. Další obnova limitu proběhne 1. 5. 2026.</p>
+      </div>
+    </aside>
+
+    <div class="content-stack">
+      <section class="content-card">
+        <div class="card-header">
+          <div>
+            <h3>Účet</h3>
+            <p>Základní identifikační údaje uživatele</p>
+          </div>
+          <a href="#" class="btn-link">Změnit heslo</a>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Jméno</label>
+            <div class="field-value">Jan</div>
+          </div>
+          <div class="field">
+            <label>Příjmení</label>
+            <div class="field-value">Novák</div>
+          </div>
+          <div class="field wide">
+            <label>E-mail</label>
+            <div class="field-value">jan.novak@tul.cz</div>
+          </div>
+          <div class="field">
+            <label>Škola</label>
+            <div class="field-value">Technická univerzita v Liberci</div>
+          </div>
+          <div class="field">
+            <label>Fakulta</label>
+            <div class="field-value">Fakulta mechatroniky</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-card">
+        <div class="card-header">
+          <div>
+            <h3>Tarif a limity</h3>
+            <p>Stav předplatného a dostupné funkce</p>
+          </div>
+          <a href="#" class="btn-link">Porovnat tarify</a>
+        </div>
+        <div class="plan-card">
+          <div class="plan-box current">
+            <h4>Akademický Free</h4>
+            <p>Vhodné pro první kontrolu bakalářské nebo diplomové práce. Omezený počet skenů a částečný náhled výsledků.</p>
+            <div class="feature-list">
+              <span class="feature-chip">5 skenů / měsíc</span>
+              <span class="feature-chip">Základní výsledky</span>
+              <span class="feature-chip">1 aktivní projekt</span>
+              <span class="feature-chip">Export bez PDF</span>
+            </div>
+          </div>
+          <div class="plan-box">
+            <h4>Akademický Pro</h4>
+            <p>Bez limitu aktivních projektů, plné návrhy oprav a kompletní historie porovnání verzí.</p>
+            <div class="feature-list">
+              <span class="feature-chip">Neomezené projekty</span>
+              <span class="feature-chip">Detailní diff</span>
+              <span class="feature-chip">Všechny chyby</span>
+              <span class="feature-chip">PDF export</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-card">
+        <div class="card-header">
+          <div>
+            <h3>Notifikace</h3>
+            <p>Volby pro upozornění a systémové e-maily</p>
+          </div>
+        </div>
+        <div class="prefs-list">
+          <div class="pref-row">
+            <div class="pref-text">
+              <strong>Dokončení analýzy</strong>
+              <span>Poslat e-mail po dokončení skenu dokumentu.</span>
+            </div>
+            <div class="toggle active"></div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-text">
+              <strong>Připomenutí nedokončeného projektu</strong>
+              <span>Upozornit po 7 dnech bez nahrání nové verze práce.</span>
+            </div>
+            <div class="toggle active"></div>
+          </div>
+          <div class="pref-row">
+            <div class="pref-text">
+              <strong>Produktové novinky</strong>
+              <span>Posílat informace o nových kontrolách a změnách v tarifech.</span>
+            </div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

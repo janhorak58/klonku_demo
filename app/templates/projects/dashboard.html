@@ -1,0 +1,129 @@
+{% extends 'layouts/app.html' %}
+{% from 'components/macros.html' import status_badge %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Dashboard{% endblock %}
+
+{% block app_content %}
+<main class="main">
+  <div class="page-header split">
+    <div>
+      <h1>Moje projekty</h1>
+      <p>Spravuj své bakalářské a diplomové práce na jednom místě.</p>
+    </div>
+    <button class="btn-primary" type="button" data-modal-open="new-project-modal">Nový projekt</button>
+  </div>
+
+  {% if projects %}
+  <div class="project-grid">
+    {% for project in projects %}
+    <a href="{{ url_for('projects.project_detail', project_id=project.id) }}" class="project-card">
+      <div class="card-top">
+        <div>
+          <div class="card-title">{{ project.title }}</div>
+          <div class="card-meta">
+            <span>{{ project.faculty_code }}</span>
+            <span class="dot">·</span>
+            <span>{{ project.file_format }}</span>
+            <span class="dot">·</span>
+            <span>{{ project.thesis_type }}</span>
+          </div>
+        </div>
+        {{ status_badge(project.status) }}
+      </div>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="stat-value">{{ project.version_count }}</span>
+          <span class="stat-label">Verze</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ project.error_count if project.error_count is not none else '—' }}</span>
+          <span class="stat-label">Chyb</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value accent">{{ project.resolved_count if project.resolved_count else '—' }}</span>
+          <span class="stat-label">Opravených</span>
+        </div>
+      </div>
+      <div class="card-date">Poslední aktivita: {{ project.last_activity }}</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">+</div>
+    <h3>Zatím žádné projekty</h3>
+    <p>Vytvoř první projekt a nahraj první verzi dokumentu.</p>
+  </div>
+  {% endif %}
+</main>
+
+<div class="modal" id="new-project-modal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-header">
+      <h2>Nový projekt</h2>
+      <button type="button" class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <form method="post" class="stack-form modal-form" id="project-form">
+      <div class="field">
+        <label for="title">Název projektu</label>
+        <input id="title" name="title" class="input" placeholder="Např. Analýza sentimentu v sociálních sítích">
+      </div>
+      <div class="two-col-grid">
+        <div class="field">
+          <label for="faculty_id">Fakulta</label>
+          <select id="faculty_id" name="faculty_id" class="input">
+            {% for faculty in faculties %}
+            <option value="{{ faculty.id }}">{{ faculty.code }} — {{ faculty.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="thesis_type">Typ práce</label>
+          <select id="thesis_type" name="thesis_type" class="input">
+            <option>Bakalářská práce</option>
+            <option>Diplomová práce</option>
+          </select>
+        </div>
+      </div>
+      <div class="radio-group">
+        <label><input type="radio" name="file_format" value="DOCX" checked> DOCX</label>
+        <label><input type="radio" name="file_format" value="LaTeX"> LaTeX</label>
+      </div>
+      <div class="pipeline-builder">
+        <div class="switch-row">
+          <strong>Pipeline</strong>
+          <div class="radio-group small">
+            <label><input type="radio" name="pipeline_mode" value="recommended" checked> Doporučená</label>
+            <label><input type="radio" name="pipeline_mode" value="custom"> Vlastní</label>
+          </div>
+        </div>
+        <div class="step-chips" id="recommended-steps">
+          {% for step in pipeline_map[faculties[0].id] %}
+          <span class="chip active-chip">{{ step.name }}</span>
+          {% endfor %}
+        </div>
+        <div class="custom-steps" id="custom-steps">
+          {% for step in pipeline_map[faculties[0].id] %}
+          <label class="custom-step-row">
+            <input type="checkbox" name="pipeline_step_ids" value="{{ step.id }}" checked>
+            {{ step.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-modal-close>Zrušit</button>
+        <button type="submit" class="btn-primary">Vytvořit projekt</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+  window.__PIPELINES__ = {{ pipeline_map|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

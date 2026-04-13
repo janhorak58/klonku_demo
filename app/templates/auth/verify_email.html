@@ -1,0 +1,23 @@
+{% extends 'layouts/auth.html' %}
+
+{% block title %}Klonku — Ověření e-mailu{% endblock %}
+
+{% block auth_content %}
+<div class="form-header">
+  <h1>Ověř svůj e-mail</h1>
+  <p>Na adresu <strong>{{ pending_user.email if pending_user else 'tvůj e-mail' }}</strong> jsme poslali potvrzovací odkaz.</p>
+</div>
+
+<div class="info-card">
+  <h3>Dokončení ověření</h3>
+  <p>Po potvrzení e-mailu tě pošleme do onboardingu, kde si nastavíš výchozí sadu kontrol.</p>
+</div>
+
+<form method="post" class="stack-form">
+  <button type="submit" class="btn-primary btn-full">Potvrdit e-mail a pokračovat</button>
+</form>
+
+<div class="form-footer">
+  Chceš použít jiný účet? <a href="{{ url_for('auth.login') }}">Přihlásit se</a>
+</div>
+{% endblock %}

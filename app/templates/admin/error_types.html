@@ -1,0 +1,58 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Typy chyb{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>Typy chyb</h1>
+      <p>Systémové a vlastní typy, které se zobrazují ve výsledcích analýzy.</p>
+    </div>
+  </div>
+
+  <div class="content-grid single">
+    <div class="panel">
+      <table class="activity-table">
+        <thead>
+          <tr><th>Slug</th><th>Label</th><th>Popis</th><th>Systémový</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for item in error_types %}
+          <tr>
+            <td><strong>{{ item.slug }}</strong></td>
+            <td><input class="input" name="type_label" value="{{ item.label }}" form="type-form-{{ item.id }}"></td>
+            <td><input class="input" name="type_description" value="{{ item.description }}" form="type-form-{{ item.id }}"></td>
+            <td>{{ 'Ano' if item.system else 'Ne' }}</td>
+            <td class="table-actions">
+              <form method="post" id="type-form-{{ item.id }}" class="table-inline-form">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="type_id" value="{{ item.id }}">
+                <button type="submit" class="btn-link">Uložit</button>
+              </form>
+              {% if not item.system %}
+              <form method="post">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="type_id" value="{{ item.id }}">
+                <button type="submit" class="btn-link danger-link">Smazat</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h2>Přidat vlastní typ</h2></div>
+      <form method="post" class="stack-form">
+        <div class="field"><label for="slug">Slug</label><input class="input" id="slug" name="slug" placeholder="napr. methodology"></div>
+        <div class="field"><label for="label">Label</label><input class="input" id="label" name="label" placeholder="Metodika"></div>
+        <div class="field"><label for="description">Popis</label><textarea class="input textarea" id="description" name="description" placeholder="Co tento typ chyby reprezentuje"></textarea></div>
+        <button type="submit" class="btn-primary">Přidat typ chyby</button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

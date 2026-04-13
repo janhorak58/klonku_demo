@@ -1,0 +1,63 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Pipeline fakulty{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>{{ faculty.code }} — Pipeline</h1>
+      <p>Pořadí, verze promptů a aktivní kroky pro vybranou fakultu.</p>
+    </div>
+  </div>
+
+  <div class="content-grid single">
+    <div class="panel">
+      <div class="panel-header"><h2>Aktuální kroky</h2></div>
+      <div class="queue-list">
+        {% for step in steps %}
+        <div class="queue-item">
+          <form method="post" class="stack-form compact-form">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="step_id" value="{{ step.id }}">
+            <div class="queue-top">
+              <strong>{{ step.order }}. {{ step.name }}</strong>
+              <span>v{{ step.prompt_version }}</span>
+            </div>
+            <div class="field"><label>Název</label><input class="input" name="step_name" value="{{ step.name }}"></div>
+            <div class="field"><label>Popis</label><textarea class="input textarea" name="step_description">{{ step.description }}</textarea></div>
+            <label class="custom-step-row">
+              <input type="checkbox" name="active" {% if step.active %}checked{% endif %}>
+              Aktivní krok
+            </label>
+            <div class="modal-actions">
+              <button type="submit" class="btn-primary btn-small">Uložit</button>
+            </div>
+          </form>
+          <form method="post">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="step_id" value="{{ step.id }}">
+            <button type="submit" class="btn-link danger-link">Smazat krok</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h2>Přidat krok</h2></div>
+      <form method="post" class="stack-form">
+        <div class="field">
+          <label for="name">Název kroku</label>
+          <input class="input" id="name" name="name" placeholder="Např. Kontrola seznamu příloh">
+        </div>
+        <div class="field">
+          <label for="description">Popis</label>
+          <textarea class="input textarea" id="description" name="description" placeholder="Stručný popis účelu kroku"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Přidat krok</button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

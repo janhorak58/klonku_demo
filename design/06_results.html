@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku — Výsledky analýzy</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+    --sev-critical: #DC2626;
+    --sev-high: #EA580C;
+    --sev-medium: #D97706;
+    --sev-low: #16A34A;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* navbar */
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 56px; background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
+  .logo { display: flex; align-items: center; gap: 2px; text-decoration: none; }
+  .logo-text { font-family: 'Libre Baskerville', serif; font-weight: 700; font-size: 17px; color: var(--dark); letter-spacing: -0.02em; }
+  .logo-dot { width: 5px; height: 5px; background: var(--salmon); border-radius: 50%; margin-top: 5px; }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--light);
+  }
+  .breadcrumb a { color: var(--mid); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--salmon); }
+  .breadcrumb svg { width: 10px; height: 10px; color: var(--salmon-mid); }
+  .breadcrumb .current { color: var(--dark); font-weight: 500; }
+
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--salmon); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+
+  /* ── SUBHEADER ── */
+  .subheader {
+    background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 56px;
+    z-index: 40;
+  }
+
+  .subheader-left {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .version-label {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 15px; font-weight: 700; color: var(--salmon);
+  }
+  .error-count {
+    font-size: 13px; color: var(--mid); font-weight: 400;
+  }
+  .error-count strong { color: var(--dark); font-weight: 600; }
+
+  .view-tabs {
+    display: flex; gap: 2px;
+    background: var(--salmon-light);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .view-tab {
+    font-size: 13px; font-weight: 500; padding: 6px 16px;
+    border-radius: 6px; border: none; background: transparent;
+    color: var(--mid); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .view-tab.active {
+    background: white; color: var(--salmon);
+    box-shadow: 0 1px 4px rgba(28,20,16,0.06);
+  }
+  .view-tab:hover:not(.active) { color: var(--dark); }
+
+  .subheader-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .btn-upload-sm {
+    font-size: 13px; font-weight: 500; padding: 7px 16px;
+    border-radius: 8px; border: none; cursor: pointer;
+    background: var(--salmon); color: white; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-upload-sm:hover { background: #C4512F; }
+
+  /* ── MAIN LAYOUT: markdown + sidebar ── */
+  .results-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    min-height: calc(100vh - 56px - 52px);
+  }
+
+  /* markdown viewer */
+  .markdown-pane {
+    padding: 32px 40px;
+    overflow-y: auto;
+    background: white;
+    border-right: 1px solid var(--salmon-mid);
+  }
+
+  .md-content {
+    max-width: 700px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--dark);
+  }
+  .md-content h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 600; margin: 0 0 16px; color: var(--dark);
+  }
+  .md-content h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 19px; font-weight: 600; margin: 32px 0 12px; color: var(--dark);
+    padding-top: 16px;
+    border-top: 1px solid rgba(238,196,179,0.3);
+  }
+  .md-content h3 {
+    font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: var(--mid);
+  }
+  .md-content p { margin-bottom: 14px; }
+
+  /* error highlights in text */
+  .error-hl {
+    padding: 1px 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .error-hl:hover { filter: brightness(0.95); }
+  .error-hl.active { outline: 2px solid currentColor; outline-offset: 1px; }
+
+  .hl-critical { background: rgba(220,38,38,0.15); color: inherit; border-bottom: 2px solid var(--sev-critical); }
+  .hl-high { background: rgba(234,88,12,0.12); color: inherit; border-bottom: 2px solid var(--sev-high); }
+  .hl-medium { background: rgba(217,119,6,0.1); color: inherit; border-bottom: 2px solid var(--sev-medium); }
+  .hl-low { background: rgba(22,163,74,0.08); color: inherit; border-bottom: 2px solid var(--sev-low); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 56px - 52px);
+    position: sticky;
+    top: 108px;
+  }
+
+  .sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .sidebar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 600; color: var(--dark);
+  }
+
+  /* filter chips */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 16px;
+  }
+  .filter-chip {
+    font-size: 11px; font-weight: 500; padding: 4px 10px;
+    border-radius: 16px; border: 1px solid var(--salmon-mid);
+    background: white; color: var(--mid); cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .filter-chip.active { background: var(--salmon); color: white; border-color: var(--salmon); }
+  .filter-chip:hover:not(.active) { border-color: var(--salmon); color: var(--salmon); }
+
+  /* error cards */
+  .error-card {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    position: relative;
+  }
+  .error-card:hover {
+    border-color: var(--salmon);
+    box-shadow: 0 2px 10px rgba(28,20,16,0.05);
+  }
+  .error-card.active {
+    border-left-color: var(--salmon);
+    background: #FFFBF9;
+    box-shadow: 0 2px 12px rgba(217,95,59,0.1);
+  }
+
+  .error-card-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .error-type {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--mid);
+  }
+  .sev-badge {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    letter-spacing: 0.03em;
+  }
+  .sev-critical { background: rgba(220,38,38,0.1); color: var(--sev-critical); }
+  .sev-high { background: rgba(234,88,12,0.1); color: var(--sev-high); }
+  .sev-medium { background: rgba(217,119,6,0.08); color: var(--sev-medium); }
+  .sev-low { background: rgba(22,163,74,0.08); color: var(--sev-low); }
+
+  .error-desc {
+    font-size: 13.5px; color: var(--dark); line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  .error-fix {
+    font-size: 12.5px; color: var(--accent-green); line-height: 1.45;
+    padding: 8px 10px;
+    background: rgba(59,140,110,0.06);
+    border-radius: 6px;
+    border-left: 2px solid var(--accent-green);
+    margin-bottom: 8px;
+  }
+  .error-fix-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--accent-green);
+    margin-bottom: 2px;
+  }
+
+  .error-goto {
+    font-size: 12px; color: var(--salmon); font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+    transition: color 0.15s;
+  }
+  .error-goto:hover { color: #C4512F; }
+  .error-goto svg { width: 12px; height: 12px; }
+
+  /* ── FREEMIUM TEASER ── */
+  .teaser-card {
+    background: linear-gradient(135deg, #FFFBF7, var(--salmon-light));
+    border: 1px dashed var(--salmon);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .teaser-lock {
+    font-size: 28px; margin-bottom: 8px;
+  }
+  .teaser-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 600; color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .teaser-card p {
+    font-size: 13px; color: var(--mid); line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .btn-upgrade {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 24px; background: var(--salmon); color: white;
+    border: none; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-upgrade:hover { background: #C4512F; box-shadow: 0 3px 12px rgba(217,95,59,0.25); }
+
+  /* animations */
+  .error-card {
+    opacity: 0; transform: translateX(12px);
+    animation: slide-in 0.35s ease forwards;
+  }
+  .error-card:nth-child(1) { animation-delay: 0.05s; }
+  .error-card:nth-child(2) { animation-delay: 0.1s; }
+  .error-card:nth-child(3) { animation-delay: 0.15s; }
+
+  @keyframes slide-in {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 900px) {
+    .results-layout { grid-template-columns: 1fr; }
+    .sidebar { max-height: none; position: static; }
+    .navbar { padding: 0 16px; }
+    .markdown-pane { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="#" class="logo"><span class="logo-text">Klonku</span><span class="logo-dot"></span></a>
+    <div class="breadcrumb">
+      <a href="03_dashboard.html">Projekty</a>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <a href="04_project_detail.html">Analýza sentimentu</a>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="current">V3</span>
+    </div>
+  </div>
+  <div class="avatar">JN</div>
+</nav>
+
+<!-- SUBHEADER -->
+<div class="subheader">
+  <div class="subheader-left">
+    <span class="version-label">V3</span>
+    <span class="error-count"><strong>7</strong> chyb nalezeno</span>
+    <div class="view-tabs">
+      <button class="view-tab active">Výsledky</button>
+      <button class="view-tab" onclick="location.href='07_diff.html'">Rozdíl oproti V2</button>
+    </div>
+  </div>
+  <div class="subheader-right">
+    <button class="btn-upload-sm">Nahrát V4</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="results-layout">
+
+  <!-- MARKDOWN VIEWER -->
+  <div class="markdown-pane">
+    <div class="md-content">
+      <h1>Analýza sentimentu v sociálních sítích</h1>
+      <p>Tato bakalářská práce se zabývá problematikou analýzy sentimentu v prostředí sociálních sítí, konkrétně platformy Twitter/X a Instagram. Cílem práce je navrhnout a implementovat systém pro automatickou klasifikaci přístupu uživatelů na základě jejich příspěvků.</p>
+
+      <h2>1. Úvod</h2>
+      <p>V posledním desetiletí došlo k masivnímu nárůstu využívání sociálních sítí. Podle statistik z roku 2025 <span class="error-hl hl-high" data-error="1">používá sociální sítě více než 4,5 miliardy lidí po celém světě [12]</span>. Tento trend vytvořil bezprecedentní množství dat, která je možné analyzovat pro různé účely.</p>
+
+      <p>Analýza sentimentu, někdy označovaná jako opinion mining, je podoblastí zpracování přirozeného jazyka (NLP). <span class="error-hl hl-medium" data-error="2">Jedná se o proces automatického určování emocionální polarity textu, tedy zda je text pozitivní, negativní či neutrální.</span></p>
+
+      <p>Tato práce se zabývá konkrétně česky psanými příspěvky, což přináší specifické výzvy v oblasti tokenizace, lemmatizace a zpracování diakritiky.</p>
+
+      <h2>2. Teoretická část</h2>
+      <h3>2.1 Strojové učení v NLP</h3>
+      <p>Současné přístupy k analýze sentimentu lze rozdělit do dvou hlavních kategorií: přístupy založené na pravidlech (rule-based) a přístupy založené na strojovém učení. V posledním období <span class="error-hl hl-critical" data-error="3">dominují transformer modely, především BERT a jeho varianty</span>.</p>
+
+      <p>Předtrénované jazykové modely (PLM) umožňují transfer learning, kdy model natrénovaný na velkém korpusu textu lze doladit (fine-tune) pro specifickou úlohu s relativně malým množstvím anotovaných dat.</p>
+
+      <h3>2.2 Existující řešení pro češtinu</h3>
+      <p>Pro český jazyk existuje <span class="error-hl hl-low" data-error="4">relativně málo hotových nástrojů pro analýzu sentimentu</span>. Mezi nejvýznamnější patří:</p>
+      <ul style="margin: 0 0 14px 24px; line-height: 1.8;">
+        <li>SentiCS — lexikonový přístup pro češtinu</li>
+        <li>CzSentiment — dataset 10 000 anotovaných recenzí</li>
+        <li>Czech BERT — předtrénovaný transformer pro češtinu</li>
+      </ul>
+
+      <h2>3. Praktická část</h2>
+      <p>Na základě teoretické analýzy jsme zvolili přístup založený na doladění modelu Czech BERT s přidáním vrstvy pro klasifikaci sentimentu. Dataset byl sestaven z 15 000 česky psaných příspěvků z platformy X (dříve Twitter).</p>
+
+      <p><span class="error-hl hl-high" data-error="5">Přesnost modelu na testovacím datasetu dosáhla F1-skóre 0.847, což je srovnatelné s výsledky publikovanými</span> ve srovnatelných studiích pro anglický jazyk.</p>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Nalezené chyby</span>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-chip active">Všechny (7)</button>
+      <button class="filter-chip">Kritické (1)</button>
+      <button class="filter-chip">Závažné (2)</button>
+      <button class="filter-chip">Střední (1)</button>
+      <button class="filter-chip">Nízké (1)</button>
+    </div>
+
+    <!-- Error 1: high -->
+    <div class="error-card" data-error="1">
+      <div class="error-card-top">
+        <span class="error-type">Citace</span>
+        <span class="sev-badge sev-high">Závažná</span>
+      </div>
+      <p class="error-desc">Citace [12] neobsahuje rok vydání ani nakladatele. Neúplný bibliografický záznam.</p>
+      <div class="error-fix">
+        <div class="error-fix-label">Návrh opravy</div>
+        Doplňte kompletní bibliografický záznam dle normy ISO 690 včetně roku vydání a nakladatele.
+      </div>
+      <div class="error-goto">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        Přejít na místo v textu
+      </div>
+    </div>
+
+    <!-- Error 2: medium -->
+    <div class="error-card" data-error="2">
+      <div class="error-card-top">
+        <span class="error-type">Styl</span>
+        <span class="sev-badge sev-medium">Střední</span>
+      </div>
+      <p class="error-desc">Definice analýzy sentimentu je příliš obecná a nemá odkaz na zdroj. V akademické práci by měla být podložena citací.</p>
+      <div class="error-fix">
+        <div class="error-fix-label">Návrh opravy</div>
+        Doplňte odkaz na Pang &amp; Lee (2008) nebo Liu (2012) jako základní zdroje pro definici.
+      </div>
+      <div class="error-goto">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        Přejít na místo v textu
+      </div>
+    </div>
+
+    <!-- Error 3: critical -->
+    <div class="error-card active" data-error="3">
+      <div class="error-card-top">
+        <span class="error-type">Chybějící část</span>
+        <span class="sev-badge sev-critical">Kritická</span>
+      </div>
+      <p class="error-desc">Kapitola 2 neobsahuje povinný přehled existujících studií (související práce). Dle směrnic FM TUL je tato část nutná.</p>
+      <div class="error-fix">
+        <div class="error-fix-label">Návrh opravy</div>
+        Přidejte podkapitolu &bdquo;2.3 Přehled existujících studií&rdquo; s min. 5 relevantními zdroji.
+      </div>
+      <div class="error-goto">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        Přejít na místo v textu
+      </div>
+    </div>
+
+    <!-- FREEMIUM TEASER -->
+    <div class="teaser-card">
+      <div class="teaser-lock">&#128274;</div>
+      <h4>+ 4 další chyby skryté</h4>
+      <p>Přejdi na Pro a odhal všechny chyby včetně návrhů oprav — bez nutnosti nového skenování.</p>
+      <button class="btn-upgrade">Upgradovat na Pro</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Simple interaction: click error card → highlight in text
+  document.querySelectorAll('.error-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.error-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const id = card.dataset.error;
+      document.querySelectorAll('.error-hl').forEach(hl => hl.classList.remove('active'));
+      const target = document.querySelector(`.error-hl[data-error="${id}"]`);
+      if (target) {
+        target.classList.add('active');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+  // Click highlight → activate card
+  document.querySelectorAll('.error-hl').forEach(hl => {
+    hl.addEventListener('click', () => {
+      const id = hl.dataset.error;
+      document.querySelectorAll('.error-hl').forEach(h => h.classList.remove('active'));
+      hl.classList.add('active');
+      const card = document.querySelector(`.error-card[data-error="${id}"]`);
+      if (card) {
+        document.querySelectorAll('.error-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+</script>
+</body>
+</html>

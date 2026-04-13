@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku — Probíhá analýza dokumentu</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* navbar (minimal) */
+  .navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 64px; background: white;
+    border-bottom: 1px solid var(--salmon-mid);
+  }
+  .logo { display: flex; align-items: center; gap: 2px; text-decoration: none; }
+  .logo-text { font-family: 'Libre Baskerville', serif; font-weight: 700; font-size: 19px; color: var(--dark); letter-spacing: -0.02em; }
+  .logo-dot { width: 6px; height: 6px; background: var(--salmon); border-radius: 50%; margin-top: 6px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--salmon); color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* ── CENTER CONTENT ── */
+  .center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 64px);
+    padding: 40px;
+  }
+
+  .analysis-card {
+    background: white;
+    border: 1px solid var(--salmon-mid);
+    border-radius: 20px;
+    padding: 48px 56px;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 4px 32px rgba(28,20,16,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* animated top border */
+  .analysis-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--salmon), var(--accent-green), var(--salmon));
+    background-size: 200% 100%;
+    animation: shimmer 2.5s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* spinner */
+  .spinner-wrap {
+    margin-bottom: 28px;
+  }
+  .spinner {
+    width: 64px;
+    height: 64px;
+    position: relative;
+    margin: 0 auto;
+  }
+  .spinner-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid var(--salmon-light);
+    border-top-color: var(--salmon);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+  }
+  .spinner-ring-inner {
+    position: absolute;
+    inset: 10px;
+    border: 3px solid rgba(59,140,110,0.15);
+    border-bottom-color: var(--accent-green);
+    border-radius: 50%;
+    animation: spin 1.8s linear infinite reverse;
+  }
+  .spinner-center {
+    position: absolute;
+    inset: 20px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .spinner-center svg {
+    width: 16px; height: 16px; color: var(--salmon);
+    animation: pulse-icon 2s ease-in-out infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse-icon { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .analysis-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .analysis-subtitle {
+    font-size: 14px;
+    color: var(--mid);
+    font-weight: 300;
+    margin-bottom: 32px;
+  }
+
+  /* progress */
+  .progress-area { margin-bottom: 28px; }
+  .progress-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: var(--salmon-light);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, var(--salmon), #E8734D);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    position: relative;
+  }
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: bar-shine 2s ease-in-out infinite;
+  }
+  @keyframes bar-shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .progress-percent {
+    font-weight: 600;
+    color: var(--salmon);
+  }
+  .progress-steps {
+    color: var(--light);
+  }
+
+  /* current step */
+  .current-step {
+    background: var(--salmon-light);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+  }
+  .current-step-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--light);
+    margin-bottom: 4px;
+  }
+  .current-step-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--dark);
+  }
+
+  /* step list */
+  .step-list {
+    text-align: left;
+    margin-bottom: 0;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--light);
+    border-bottom: 1px solid rgba(238,196,179,0.3);
+  }
+  .step-item:last-child { border-bottom: none; }
+  .step-item.done { color: var(--mid); }
+  .step-item.active { color: var(--dark); font-weight: 500; }
+
+  .step-icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px; font-weight: 600;
+  }
+  .step-icon.done-icon {
+    background: rgba(59,140,110,0.12);
+    color: var(--accent-green);
+  }
+  .step-icon.active-icon {
+    background: rgba(217,95,59,0.1);
+    color: var(--salmon);
+    animation: pulse-icon 2s ease-in-out infinite;
+  }
+  .step-icon.pending-icon {
+    background: #F3F0ED;
+    color: var(--light);
+  }
+
+  /* tip at bottom */
+  .tip {
+    font-size: 12px;
+    color: var(--light);
+    margin-top: 24px;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 600px) {
+    .analysis-card { padding: 32px 24px; }
+    .center { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="#" class="logo"><span class="logo-text">Klonku</span><span class="logo-dot"></span></a>
+  <div class="avatar">JN</div>
+</nav>
+
+<div class="center">
+  <div class="analysis-card">
+
+    <div class="spinner-wrap">
+      <div class="spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring-inner"></div>
+        <div class="spinner-center">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <h2>Probíhá analýza dokumentu</h2>
+    <p class="analysis-subtitle">Analýza sentimentu v sociálních sítích &mdash; V3</p>
+
+    <div class="progress-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: 40%"></div>
+      </div>
+      <div class="progress-info">
+        <span class="progress-percent">40 %</span>
+        <span class="progress-steps">2 / 5 kroků</span>
+      </div>
+    </div>
+
+    <div class="current-step">
+      <div class="current-step-label">Právě probíhá</div>
+      <div class="current-step-name">Kontrola citací a zdrojů</div>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item done">
+        <span class="step-icon done-icon">&#10003;</span>
+        Chybějící části
+      </div>
+      <div class="step-item done">
+        <span class="step-icon done-icon">&#10003;</span>
+        Typografie a formát
+      </div>
+      <div class="step-item active">
+        <span class="step-icon active-icon">3</span>
+        Citace a zdroje
+      </div>
+      <div class="step-item">
+        <span class="step-icon pending-icon">4</span>
+        Jazyk a pravopis
+      </div>
+      <div class="step-item">
+        <span class="step-icon pending-icon">5</span>
+        Struktura a koherence
+      </div>
+    </div>
+
+    <p class="tip">Můžeš odejít — analýzu ti nezastavíme. Výsledky budou čekat v přehledu.</p>
+
+  </div>
+</div>
+
+</body>
+</html>

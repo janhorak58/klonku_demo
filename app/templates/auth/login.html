@@ -1,0 +1,43 @@
+{% extends 'layouts/auth.html' %}
+
+{% block title %}Klonku — Přihlášení{% endblock %}
+
+{% block auth_content %}
+<div class="form-header">
+  <h1>Přihlásit se</h1>
+  <p>Pokračuj do přehledu projektů nebo se přepni na demo admin rozhraní.</p>
+</div>
+
+<div class="sample-credentials">
+  {% for account in sample_accounts %}
+  <div class="sample-pill">{{ account.label }}: {{ account.email }} / {{ account.password }}</div>
+  {% endfor %}
+</div>
+
+<a href="{{ url_for('projects.demo') }}" class="btn-secondary btn-full">Otevřít veletržní demo bez přihlášení</a>
+
+<form method="post" class="stack-form">
+  <div class="field">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email" placeholder="jan.novak@tul.cz" value="{{ form.get('email', '') if form else '' }}" autocomplete="email">
+  </div>
+  <div class="field">
+    <label for="password">Heslo</label>
+    <input type="password" id="password" name="password" placeholder="demo12345" autocomplete="current-password">
+  </div>
+  <button type="submit" class="btn-primary btn-full">Přihlásit se</button>
+</form>
+
+<form method="post" action="{{ url_for('auth.login_google') }}">
+  <button class="btn-google btn-full" type="submit">
+    <span>Pokračovat přes Google</span>
+  </button>
+</form>
+
+<div class="form-footer">
+  Nemáš účet? <a href="{{ url_for('auth.register') }}">Zaregistruj se</a>
+</div>
+<div class="terms">
+  <a href="{{ url_for('auth.forgot_password') }}">Zapomněl/a jsem heslo</a>
+</div>
+{% endblock %}

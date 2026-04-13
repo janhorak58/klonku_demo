@@ -1,0 +1,63 @@
+{% extends 'layouts/app.html' %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Analyzuji dokument{% endblock %}
+
+{% block app_content %}
+<div class="center-page">
+  <div class="analysis-card" data-status-url="{{ url_for('projects.analysis_status', project_id=project.id, version_id=version.id) }}" data-results-url="{{ url_for('projects.results', project_id=project.id, version_id=version.id) }}">
+    <div class="spinner-wrap">
+      <div class="spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring-inner"></div>
+        <div class="spinner-center"></div>
+      </div>
+    </div>
+
+    <h2>{% if version.status in ['failed', 'conversion_failed'] %}Analýza se nepodařila{% else %}Probíhá analýza dokumentu{% endif %}</h2>
+    <p class="analysis-subtitle">{{ project.title }} — V{{ version.version_number }}</p>
+
+    <div id="polling-content" {% if version.status in ['failed', 'conversion_failed'] %}class="hidden"{% endif %}>
+      <div class="progress-area">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-info">
+          <span class="progress-percent" id="progress-percent">0 %</span>
+          <span class="progress-steps" id="progress-steps">0 / {{ version.analysis_steps|length }} kroků</span>
+        </div>
+      </div>
+
+      <div class="current-step">
+        <div class="current-step-label">Právě probíhá</div>
+        <div class="current-step-name" id="current-step">{{ version.analysis_steps[0] if version.analysis_steps else 'Načítám…' }}</div>
+      </div>
+
+      <div class="step-list" id="step-list">
+        {% for step in version.analysis_steps %}
+        <div class="step-item" data-step-index="{{ loop.index0 }}">
+          <span class="step-icon pending-icon">{{ loop.index }}</span>
+          {{ step }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="analysis-error" {% if version.status not in ['failed', 'conversion_failed'] %}class="hidden"{% endif %}>
+      <div class="info-card">
+        <h3>Nepodařilo se dokončit zpracování</h3>
+        <p>Při zpracování dokumentu došlo k chybě. Můžeš zkusit analýzu spustit znovu.</p>
+      </div>
+      <form method="post" action="{{ url_for('projects.analysis_retry', project_id=project.id, version_id=version.id) }}">
+        <button type="submit" class="btn-primary btn-full">Zkusit znovu</button>
+      </form>
+    </div>
+
+    <p class="tip">Můžeš odejít — analýzu nezastavíme. Po dokončení tě frontend přesměruje na výsledky.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/poll.js') }}"></script>
+{% endblock %}

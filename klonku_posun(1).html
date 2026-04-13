@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klonku - Posun projektu</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --salmon: #D95F3B;
+    --salmon-light: #F5E8E3;
+    --salmon-mid: #EEC4B3;
+    --cream: #FDFAF7;
+    --dark: #1C1410;
+    --mid: #6B4F3F;
+    --light: #B09080;
+    --accent-green: #3B8C6E;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #e8e0d8;
+    color: var(--dark);
+    margin: 0;
+    padding: 20px 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 24px;
+    padding: 14mm 16mm 12mm;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+  }
+
+  .page + .page { page-break-before: always; }
+
+
+  /* -- HEADER -- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5mm;
+  }
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .logo-wrap img {
+    height: 30px;
+    width: auto;
+    display: block;
+  }
+  .logo-text {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    font-size: 19pt;
+    color: #18120e;
+    letter-spacing: -0.02em;
+    margin-left: 0.45rem;
+    line-height: 1;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .pill {
+    background: var(--salmon);
+    color: white;
+    font-size: 7pt;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .sub-pill {
+    background: var(--accent-green);
+    color: white;
+    font-size: 6.5pt;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  /* -- RULE -- */
+  .rule {
+    height: 1.5px;
+    background: linear-gradient(to right, var(--salmon), var(--salmon-mid), transparent);
+    margin-bottom: 5mm;
+    border: none;
+  }
+
+  /* -- SECTIONS -- */
+  .section {
+    margin-bottom: 5mm;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 11pt;
+    color: var(--salmon);
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+    position: relative;
+  }
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 28px; height: 2px;
+    background: var(--salmon);
+    border-radius: 1px;
+  }
+
+  .section p, .section li {
+    font-size: 8pt;
+    line-height: 1.6;
+    color: var(--mid);
+    font-weight: 300;
+  }
+  .section p { margin-bottom: 2mm; }
+  .section p strong, .section li strong {
+    font-weight: 500;
+    color: var(--dark);
+  }
+  .section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2mm 0;
+  }
+  .section ul li {
+    padding-left: 12px;
+    position: relative;
+    margin-bottom: 1.5mm;
+  }
+  .section ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--salmon);
+    font-size: 7pt;
+    top: 1px;
+    font-weight: 500;
+  }
+
+  /* two column grid */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    gap: 0 5mm;
+    margin-bottom: 4mm;
+  }
+  .two-col .col-divider {
+    background: var(--salmon-mid);
+    width: 1px;
+    align-self: stretch;
+  }
+
+  /* highlight box */
+  .highlight-box {
+    background: #f8f3ee;
+    border-radius: 4px;
+    padding: 3mm 4mm;
+    margin-top: 2mm;
+  }
+  .highlight-box p {
+    font-size: 7.5pt;
+    line-height: 1.55;
+    color: var(--mid);
+    margin-bottom: 1mm;
+  }
+  .highlight-box p:last-child { margin-bottom: 0; }
+
+  /* instagram posts */
+  .ig-grid {
+    display: flex;
+    gap: 2.5mm;
+    margin-top: 2mm;
+  }
+  .ig-post {
+    flex: 1;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--salmon-light);
+    border: 1px solid var(--salmon-mid);
+    aspect-ratio: 1;
+    max-height: 32mm;
+    position: relative;
+  }
+  .ig-post img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .ig-post-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(28,20,16,0.45);
+    color: white;
+    font-size: 5.5pt;
+    padding: 1.5mm 2mm;
+  }
+
+  /* roadmap status badge */
+  .status-badge {
+    position: absolute;
+    top: 3mm; right: 3mm;
+    font-size: 6.5pt;
+    font-weight: 600;
+  }
+
+  /* -- FOOTER -- */
+  .footer {
+    margin-top: auto;
+    padding-top: 3mm;
+    border-top: 0.5px solid var(--salmon-mid);
+    display: flex;
+    justify-content: center;
+  }
+  .footer span {
+    font-size: 6.5pt;
+    color: var(--light);
+    letter-spacing: 0.05em;
+  }
+
+  /* page number */
+  .page-num {
+    position: absolute;
+    bottom: 10mm;
+    right: 16mm;
+    font-size: 7pt;
+    color: var(--light);
+    font-weight: 500;
+  }
+
+
+  @media print {
+    body { background: white; padding: 0; }
+    .page { box-shadow: none; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ STRANA 1 ═══════════════════ -->
+<div class="page">
+
+  <header class="header">
+    <div class="logo-wrap">
+      <img src="logo.svg" alt="Klonku logo">
+      <div class="logo-text">Klonku</div>
+    </div>
+    <div class="header-right">
+      <span class="pill">Start-up TUL 2026</span>
+      <span class="sub-pill">Fáze 2 - Posun projektu</span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <!-- PROBLÉM -->
+  <div class="section">
+    <div class="section-title">Problém</div>
+    <p>
+      Korekce závěrečné práce je pro studenty zdlouhavý a nákladný proces.
+      Profesionální korektoři si účtují stovky až tisíce korun za celkovou revizi - a ne každý student si to může dovolit nebo stihnout.
+    </p>
+    <ul>
+      <li><strong>Manuální kontrola pomocí AI</strong> - studenti, kteří zkouší obecné AI chatboty, musí vždy správně formulovat prompt a čekat na každou dílčí odpověď - bez záruky, že odhalí všechny chyby dle směrnic své fakulty.</li>
+      <li><strong>Opakovaná vracení práce</strong> - vedoucí práce vrací opakovaně stejné formální nedostatky, které jsou přitom snadno automatizovatelné.</li>
+      <li><strong>Žádný specializovaný nástroj</strong> - neexistuje řešení, které by systematicky kontrolovalo práci přímo dle požadavků konkrétní fakulty.</li>
+    </ul>
+  </div>
+
+  <!-- ŘEŠENÍ -->
+  <div class="section">
+    <div class="section-title">Řešení</div>
+    <p>
+      Student nahraje svou práci (DOCX nebo LaTeX) do webové aplikace. Dokument projde
+      <strong>vícekrokovou pipeline jazykových modelů</strong> - sérií specializovaných kontrol, z nichž každá hledá jiný typ problému:
+    </p>
+    <ul>
+      <li><strong>Chybějící náležitosti</strong> - kontrola přítomnosti povinných částí dle směrnic fakulty (abstrakt, prohlášení, seznam zkratek).</li>
+      <li><strong>Citace a zdroje</strong> - neúplné bibliografické záznamy, nekonzistentní citační styl, chybějící in-text odkazy.</li>
+      <li><strong>Typografie a jazyk</strong> - překlepy, gramatické chyby, nejednotná terminologie, stylistické nedostatky.</li>
+      <li><strong>Struktura a koherence</strong> - logické rozpory, nevyvážená hloubka kapitol, opakující se pasáže.</li>
+    </ul>
+    <p>Výstupem je <strong>přehledný seznam chyb s návrhy oprav a přesnou lokací v textu</strong>.</p>
+  </div>
+
+  <!-- VALIDACE -->
+  <div class="section">
+    <div class="section-title">Validace</div>
+    <ul>
+      <li><strong>Osobní zkušenost:</strong> Oba členové týmu jsou studenti FM TUL a sami píší závěrečné práce - rádi bychom měli automatický nástroj pro jejich kontrolu. Problém jsme zažili přímo z první ruky.</li>
+      <li><strong>Rozhovory se studenty:</strong> Oslovili jsme studenty píšící diplomové práce. Celkem pět z nich projevilo zájem o testování a poskytlo nám kontakt pro zaslání beta verze.</li>
+      <li><strong>Doménová mezera:</strong> V prostředí TUL v současnosti neexistuje žádné specializované řešení pro automatickou kontrolu formálních požadavků závěrečných prací.</li>
+    </ul>
+  </div>
+
+  <!-- ANALÝZA KONKURENCE -->
+  <div class="section">
+    <div class="section-title">Analýza konkurence</div>
+    <div class="two-col">
+      <div>
+        <p><strong>Existující nástroje</strong></p>
+        <ul>
+          <li><strong>Grammarly / LanguageTool</strong> - obecné jazykové kontroly bez znalosti akademických směrnic; podpora češtiny je omezená.</li>
+          <li><strong>Theses.cz</strong> - kontrola plagiátů, ale žádná kontrola formátu, struktury ani citací.</li>
+          <li><strong>AI chatboty (ruční)</strong> - student může části práce opakovaně vkládat do AI chatbotů, avšak musí vždy správně formulovat prompt a čekat na každou dílčí odpověď. Systematická kontrola dle směrnic fakulty chybí.</li>
+        </ul>
+      </div>
+      <div class="col-divider"></div>
+      <div>
+        <p><strong>Naše diferenciace</strong></p>
+        <ul>
+          <li><strong>České akademické směrnice</strong> - pipeline je navržena dle pokynů konkrétních fakult TUL.</li>
+          <li><strong>Komplexní zpracování</strong> - nejde o jeden prompt, ale o sérii kroků, kde každý řeší jiný aspekt práce: náležitosti, citace, typografie i struktura.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">1 / 2</div>
+
+  <footer class="footer">
+    <span>Klonku.cz &nbsp;·&nbsp; Start-up TUL 2026 &nbsp;·&nbsp; J.K. &amp; J.H.</span>
+  </footer>
+</div>
+
+<!-- ═══════════════════ STRANA 2 ═══════════════════ -->
+<div class="page">
+
+  <header class="header">
+    <div class="logo-wrap">
+      <img src="logo.svg" alt="Klonku logo">
+      <div class="logo-text">Klonku</div>
+    </div>
+    <div class="header-right">
+      <span class="pill">Start-up TUL 2026</span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <!-- MARKETINGOVÁ STRATEGIE -->
+  <div class="section">
+    <div class="section-title">Marketingová strategie</div>
+    <p>
+      <strong>Cílová skupina:</strong> Studenti posledních ročníků bakalářského a magisterského studia.
+      Dle dat ze STAGu přímo na TUL studuje celkem <strong>7 852 studentů</strong>, z nichž každoročně odevzdává závěrečnou práci <strong>~1 400 studentů</strong>.
+      V celé ČR jde o přibližně <strong>75 000 studentů ročně</strong> - to je náš adresovatelný trh.
+    </p>
+    <div class="two-col" style="margin-top:3mm;">
+      <div>
+        <p><strong>Prostředky pro šíření</strong></p>
+        <ul>
+          <li><strong>Organické šíření</strong> - sdílení ve studijních skupinách, na Facebook skupinách fakult a Discord serverech studentů.</li>
+          <li><strong>Sociální sítě</strong> - Instagram a TikTok, krátká videa „Před vs. Po kontrole" zaměřená na studenty.</li>
+          <li><strong>Plakáty</strong> - v budovách školy a na kolejích, ihned po vytištění.</li>
+        </ul>
+      </div>
+      <div class="col-divider"></div>
+      <div>
+        <p><strong>Monetizace</strong></p>
+        <ul>
+          <li><strong>Free tier:</strong> Studenti s univerzitním e-mailem mají k dispozici několik bezplatných analýz pro vyzkoušení nástroje.</li>
+          <li><strong>Freemium logika:</strong> Bezplatná verze ukáže, že chyby existují, ale neodhalí vše - přirozená motivace k přechodu na plný přístup.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRANDING -->
+  <div class="section">
+    <div class="section-title">Branding</div>
+    <div class="two-col">
+      <div>
+        <ul>
+          <li><strong>Vizuální identita:</strong> Teplá terakota a krémové pozadí tvoří přívětivý akademický vizuál - příjemný pro studenty a zároveň seriózní pro akademické prostředí.</li>
+          <li><strong>Typografie:</strong> Playfair Display pro nadpisy, DM Sans pro texty - kombinace, která budí důvěru a je příjemná ke čtení.</li>
+        </ul>
+        <div class="highlight-box" style="margin-top:2mm;">
+          <p><strong>Slogan:</strong> „Odevzdej diplomku. Bez stresu."</p>
+          <p><strong>Elevator pitch:</strong> Klonku je AI nástroj, který zkontroluje tvou bakalářku nebo diplomku podle směrnic tvé fakulty a odhalí chyby ještě před odevzdáním.</p>
+        </div>
+      </div>
+      <div class="col-divider"></div>
+      <div>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:3mm;">
+          <img src="logo.svg" alt="Klonku logo" style="height:22px; width:auto;">
+          <span style="font-family:'Libre Baskerville', serif; font-weight:700; font-size:13pt; color:#18120e; letter-spacing:-0.02em; line-height:1;">Klonku</span>
+        </div>
+        <p style="font-size:7.5pt; color:var(--dark); font-weight:500; margin-bottom:1.5mm;">Příspěvky na Instagramu</p>
+        <div class="ig-grid">
+          <div class="ig-post">
+            <img src="napad%20na%20pozadi_00.jpg" alt="Instagram příspěvek 1">
+            <div class="ig-post-label">@klonku.cz</div>
+          </div>
+          <div class="ig-post">
+            <img src="napad%20na%20pozadi_01.jpg" alt="Instagram příspěvek 2">
+            <div class="ig-post-label">@klonku.cz</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXTRA EFFORT -->
+  <div class="section">
+    <div class="section-title">Extra effort</div>
+    <ul>
+      <li><strong>Kompletní API design dokument</strong> - návrh FastAPI backendu: datový model (PostgreSQL), REST endpointy, autentizace (JWT + Google OAuth), asynchronní pipeline přes ARQ + Redis, JSON schéma výstupů.</li>
+      <li><strong>Analýza jazykových modelů a nákladů</strong> - provedli jsme analýzu dostupných LLM a jejich nákladů. Porovnali jsme 13 modelů (Gemini, GPT-5, Qwen, Kimi) dle výkonu a ceny; výsledkem je pipeline s náklady pod 2 Kč za analýzu 50stránkové bakalářské práce.</li>
+    </ul>
+  </div>
+
+  <!-- ROADMAPA -->
+  <div class="section">
+    <div class="section-title">Roadmapa</div>
+    <div style="display:flex; gap:3mm; margin-top:2mm;">
+      <div style="flex:1; background:#f8f3ee; border-radius:4px; padding:3mm; border-top:2px solid var(--accent-green); position:relative;">
+        <div class="status-badge" style="color:var(--accent-green);">&#10003; Hotovo</div>
+        <p style="font-weight:600; color:var(--salmon); font-size:7.5pt; margin-bottom:1mm;">Březen 2026</p>
+        <p style="font-size:7pt; color:var(--mid);">Analýza trhu a LLM nákladů, návrh architektury backendu a API designu, výběr technologického stacku.</p>
+      </div>
+      <div style="flex:1; background:#f8f3ee; border-radius:4px; padding:3mm; border-top:2px solid var(--salmon); position:relative;">
+        <div class="status-badge" style="color:var(--salmon);">&#9654; Probíhá</div>
+        <p style="font-weight:600; color:var(--salmon); font-size:7.5pt; margin-bottom:1mm;">Duben 2026</p>
+        <p style="font-size:7pt; color:var(--mid);">Vývoj MVP pipeline, první testy na reálných závěrečných pracích a spuštění první verze pro uživatele.</p>
+      </div>
+      <div style="flex:1; background:#f8f3ee; border-radius:4px; padding:3mm; border-top:2px solid var(--salmon-mid); position:relative;">
+        <div class="status-badge" style="color:var(--light);">Plánováno</div>
+        <p style="font-weight:600; color:var(--salmon); font-size:7.5pt; margin-bottom:1mm;">Květen 2026</p>
+        <p style="font-size:7pt; color:var(--mid);">Hlavní sezona odevzdávání bakalářských a diplomových prací - Klonku je v provozu a k dispozici studentům TUL.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">2 / 2</div>
+
+  <footer class="footer">
+    <span>Klonku.cz &nbsp;·&nbsp; Start-up TUL 2026 &nbsp;·&nbsp; J.K. &amp; J.H.</span>
+  </footer>
+</div>
+
+</body>
+</html>

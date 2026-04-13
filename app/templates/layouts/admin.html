@@ -1,0 +1,7 @@
+{% extends 'layouts/base.html' %}
+{% from 'components/macros.html' import admin_navbar %}
+
+{% block shell %}
+{{ admin_navbar(g.current_user) }}
+{% block admin_content %}{% endblock %}
+{% endblock %}

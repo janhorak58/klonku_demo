@@ -1,0 +1,37 @@
+{% extends 'layouts/app.html' %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Detail chyby{% endblock %}
+
+{% block app_content %}
+<main class="main main-medium">
+  <div class="breadcrumb">
+    <a href="{{ url_for('projects.dashboard') }}">Projekty</a>
+    <span>›</span>
+    <span class="current">Detail chyby</span>
+  </div>
+
+  <section class="content-card">
+    <div class="card-header">
+      <div>
+        <h3>{{ error.type }}</h3>
+        <p>{{ error.project_title }} · {{ error.version_id }}</p>
+      </div>
+      <span class="sev-badge sev-{{ error.severity }}">{{ error.severity }}</span>
+    </div>
+    <div class="stack-form">
+      <div class="field">
+        <label>Popis</label>
+        <div class="field-value">{{ error.description }}</div>
+      </div>
+      <div class="field">
+        <label>Návrh opravy</label>
+        <div class="field-value">{{ error.suggested_fix }}</div>
+      </div>
+      <div class="modal-actions">
+        <a href="{{ url_for('projects.results', project_id=error.project_id, version_id=error.version_id) }}" class="btn-secondary">Zpět na výsledky</a>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

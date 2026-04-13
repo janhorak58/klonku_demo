@@ -1,0 +1,84 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Klonku — Onboarding{% endblock %}
+{% block body_class %}cream-body{% endblock %}
+
+{% block shell %}
+<div class="topbar">
+  <div class="logo">
+    <span class="logo-text">Klonku</span>
+    <span class="logo-dot"></span>
+  </div>
+  <div class="steps">
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+  </div>
+  <a href="{{ url_for('projects.dashboard') }}" class="skip-btn">Přeskočit</a>
+</div>
+
+<main class="page page-narrow">
+  <div class="page-header center">
+    <div class="greeting">Krok 2 ze 3</div>
+    <h1>Jak chceš kontrolovat svou práci?</h1>
+    <p>Vyber si, jaké kontroly se mají provádět při každé analýze. Preference můžeš kdykoliv změnit i později.</p>
+  </div>
+
+  <form method="post" class="stack-xl" id="onboarding-form">
+    <div class="card">
+      <div class="field">
+        <label for="faculty_id">Výchozí fakulta</label>
+        <select id="faculty_id" name="faculty_id" class="input">
+          {% for faculty in faculties %}
+          <option value="{{ faculty.id }}" {% if faculty.id == selected_faculty %}selected{% endif %}>{{ faculty.code }} — {{ faculty.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="pipeline-options">
+      <label class="pipeline-card selected" data-pipeline-card>
+        <input type="radio" name="pipeline_mode" value="recommended" checked hidden>
+        <div class="radio-circle"></div>
+        <span class="card-badge badge-recommended">Doporučeno</span>
+        <h3>Kompletní kontrola</h3>
+        <p class="card-desc">Všechny kroky kontroly podle vybrané fakulty — od citací přes typografii až po strukturu.</p>
+        <div class="step-chips" data-recommended-steps>
+          {% for step in recommended_steps %}
+          <span class="chip active-chip">{{ step.name }}</span>
+          {% endfor %}
+        </div>
+      </label>
+
+      <label class="pipeline-card" data-pipeline-card>
+        <input type="radio" name="pipeline_mode" value="custom" hidden>
+        <div class="radio-circle"></div>
+        <span class="card-badge badge-custom">Vlastní</span>
+        <h3>Vybrat kroky</h3>
+        <p class="card-desc">Zvol si přesně, co chceš kontrolovat. Nastavení můžeš kdykoliv změnit i později.</p>
+        <div class="custom-steps" data-custom-steps>
+          {% for step in recommended_steps %}
+          <label class="custom-step-row">
+            <input type="checkbox" name="step_ids" value="{{ step.id }}" checked>
+            {{ step.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </label>
+    </div>
+
+    <div class="cta-area">
+      <button class="btn-primary btn-large" type="submit">Pokračovat do přehledu</button>
+      <p class="cta-note">Preference můžeš kdykoliv upravit i na úrovni konkrétního projektu.</p>
+    </div>
+  </form>
+
+</main>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+  window.__PIPELINE_MAP__ = {{ pipeline_map|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Audit log{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>Audit log</h1>
+      <p>Read-only výpis posledních systémových a administračních událostí.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <table class="activity-table">
+      <thead>
+        <tr><th>Čas</th><th>Událost</th><th>Subjekt</th><th>Stav</th></tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td>{{ entry.time }}</td>
+          <td><strong>{{ entry.event }}</strong><br>{{ entry.detail }}</td>
+          <td>{{ entry.subject }}</td>
+          <td><span class="row-status {{ entry.status }}">{{ entry.status_label }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

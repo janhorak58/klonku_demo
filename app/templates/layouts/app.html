@@ -1,0 +1,7 @@
+{% extends 'layouts/base.html' %}
+{% from 'components/macros.html' import app_navbar %}
+
+{% block shell %}
+{{ app_navbar(g.current_user, active_nav|default('projects')) }}
+{% block app_content %}{% endblock %}
+{% endblock %}

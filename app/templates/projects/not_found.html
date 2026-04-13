@@ -1,0 +1,14 @@
+{% extends 'layouts/app.html' %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Nenalezeno{% endblock %}
+
+{% block app_content %}
+<main class="main">
+  <div class="empty-state">
+    <h3>Požadovaný projekt nebo verze nebyly nalezeny.</h3>
+    <p>Zkontroluj prosím odkaz nebo se vrať zpět na přehled projektů.</p>
+    <a href="{{ url_for('projects.dashboard') }}" class="btn-primary">Zpět na dashboard</a>
+  </div>
+</main>
+{% endblock %}

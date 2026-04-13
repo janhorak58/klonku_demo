@@ -1,0 +1,126 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Klonku — Veletržní demo{% endblock %}
+{% block body_class %}demo-body{% endblock %}
+
+{% block shell %}
+<div
+  class="demo-app"
+  data-demo-total="{{ all_errors|length }}"
+  data-demo-step-count="{{ pipeline_steps|length }}"
+>
+  <section class="demo-toolbar">
+    <div class="demo-toolbar-copy">
+      <div class="demo-eyebrow">Klonku</div>
+      <h1>Hledání chyb v práci</h1>
+      <p>{{ project.title }} • {{ project.file_format }} • V{{ version.version_number }}</p>
+      <div class="demo-pipeline-row">
+        {% for step in pipeline_steps %}
+        <span class="feature-chip">{{ step.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="demo-toolbar-status">
+      <div class="demo-status-card">
+        <span class="demo-status-label">Stav analýzy</span>
+        <strong id="demo-status-text">Připraveno</strong>
+        <span id="demo-status-step">Spusť analýzu.</span>
+      </div>
+
+      <div class="demo-toolbar-actions">
+        <button type="button" class="btn-secondary" id="demo-reset">Reset</button>
+        <button type="button" class="btn-primary" id="demo-start">Začít analýzu</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-workspace">
+    <div class="demo-document-pane">
+      <div class="demo-pane-header">
+        <div>
+          <strong>Dokument</strong>
+        </div>
+        <div class="demo-counter">
+          <span>Nalezené chyby</span>
+          <strong id="demo-found-count">0</strong>
+        </div>
+      </div>
+
+      <div class="demo-progress-shell" aria-hidden="true">
+        <div class="demo-progress-bar">
+          <div class="demo-progress-fill" id="demo-progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="demo-scroll demo-document-scroll">
+        <div class="md-content demo-document-content">
+          {{ document_html|safe }}
+        </div>
+      </div>
+    </div>
+
+    <aside class="demo-sidebar-pane">
+      <div class="demo-pane-header demo-pane-header-sidebar">
+        <strong>Nalezené chyby</strong>
+      </div>
+
+      <div class="demo-category-chips" id="demo-category-chips">
+        <button class="demo-cat-chip active" data-cat="all">Zvolit vše</button>
+        {% for group in grouped_errors %}
+        <button class="demo-cat-chip" data-cat="{{ group.title }}">{{ group.title }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="demo-scroll demo-sidebar-scroll">
+        <div class="demo-empty-state" id="demo-empty-state">
+          <h2>Zatím bez nálezů</h2>
+          <p>Spusť analýzu.</p>
+        </div>
+
+        <div class="demo-error-list">
+          {% for group in grouped_errors %}
+          <section class="demo-error-group hidden" data-group="{{ group.title }}">
+            <div class="demo-error-group-header">
+              <h3>{{ group.title }}</h3>
+            </div>
+            <div class="demo-error-group-items">
+              {% for error in group['items'] %}
+              <div
+                class="error-card demo-error-card hidden"
+                data-error="{{ error.id }}"
+                data-severity="{{ error.severity }}"
+                data-category="{{ group.title }}"
+                data-order="{{ error.reveal_order }}"
+              >
+                <div class="error-card-top">
+                  <span class="error-type">{{ error.type }}</span>
+                  <span class="sev-badge sev-{{ error.severity }}">{{ error.severity }}</span>
+                </div>
+                <p class="error-desc">{{ error.description }}</p>
+                <div class="error-meta-line">
+                  <span class="error-meta-pill">{{ error.location }}</span>
+                  <span>{{ error.impact }}</span>
+                </div>
+                <div class="error-fix">
+                  <div class="error-fix-label">Návrh opravy</div>
+                  {{ error.suggested_fix }}
+                </div>
+                <div class="error-links demo-link-row">
+                  <div class="error-goto">Přejít na místo v textu</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </section>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+  </section>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'layouts/app.html' %}
+{% from 'components/macros.html' import status_badge %}
+
+{% set active_nav = 'projects' %}
+{% block title %}Klonku — Detail projektu{% endblock %}
+
+{% block app_content %}
+<main class="main main-medium">
+  <div class="breadcrumb">
+    <a href="{{ url_for('projects.dashboard') }}">Projekty</a>
+    <span>›</span>
+    <span class="current">{{ project.title }}</span>
+  </div>
+
+  <div class="project-header">
+    <div>
+      <h1>{{ project.title }}</h1>
+      <div class="project-meta">
+        <span class="meta-chip">{{ faculty.short_name }}</span>
+        <span class="meta-chip">{{ project.file_format }}</span>
+        <span class="meta-chip">Vytvořeno {{ project.created_at }}</span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button class="btn-secondary" type="button" data-modal-open="rename-modal">Přejmenovat</button>
+      <button class="btn-primary" type="button" data-modal-open="upload-modal">Nahrát novou verzi</button>
+    </div>
+  </div>
+
+  <div class="pipeline-banner">
+    <div class="pipeline-banner-left">
+      <span class="label">Kontroly:</span>
+      <div class="pipeline-chips">
+        {% for step in pipeline_steps %}
+        <span class="p-chip">{{ step.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <button class="btn-link" type="button" data-modal-open="pipeline-modal">Upravit</button>
+  </div>
+
+  <div class="section-title">
+    Verze dokumentu
+    <span class="count">{{ versions|length }}</span>
+  </div>
+
+  <div class="version-list">
+    {% for version in versions %}
+    <div class="version-row">
+      <div class="version-num">V{{ version.version_number }}</div>
+      <div class="version-info">
+        <div class="version-date">{{ version.created_at }}</div>
+        <div class="version-stats">
+          {% if version.error_count is not none %}
+          <span><strong>{{ version.error_count }}</strong> chyb</span>
+          {% endif %}
+          {% if version.unresolved_from_previous %}
+          <span class="resolved"><strong>{{ version.unresolved_from_previous }}</strong> stále otevřených</span>
+          {% endif %}
+        </div>
+      </div>
+      {{ status_badge(version.status) }}
+      <div class="version-actions">
+        {% if version.has_diff %}
+        <a href="{{ url_for('projects.diff', project_id=project.id, version_id=version.id) }}" class="btn-secondary btn-small">Rozdíl oproti V{{ version.version_number - 1 }}</a>
+        {% endif %}
+        <a href="{{ url_for('projects.results', project_id=project.id, version_id=version.id) }}" class="btn-primary btn-small">Výsledky</a>
+        <form method="post">
+          <input type="hidden" name="action" value="delete_version">
+          <input type="hidden" name="version_id" value="{{ version.id }}">
+          <button type="submit" class="btn-link danger-link">Smazat verzi</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="danger-zone">
+    <input type="hidden" name="action" value="delete_project">
+    <div>
+      <h3>Odstranit projekt</h3>
+      <p>Smaže projekt i všechny jeho verze z běžící mock instance.</p>
+    </div>
+    <button type="submit" class="btn-secondary">Smazat projekt</button>
+  </form>
+</main>
+
+<div class="modal" id="rename-modal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Přejmenovat projekt</h2>
+      <button type="button" class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <form method="post" class="stack-form">
+      <input type="hidden" name="action" value="rename_project">
+      <div class="field">
+        <label for="rename-title">Název projektu</label>
+        <input class="input" id="rename-title" name="title" value="{{ project.title }}">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-modal-close>Zrušit</button>
+        <button type="submit" class="btn-primary">Uložit název</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="upload-modal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Nahrát novou verzi</h2>
+      <button type="button" class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="stack-form" id="upload-form">
+      <input type="hidden" name="action" value="upload_version">
+      <label class="upload-dropzone">
+        <span>📄 Přetáhni soubor sem nebo klikni pro výběr</span>
+        <small>.docx nebo .tex • max 20 MB</small>
+        <input type="file" name="document" id="document-input" hidden>
+      </label>
+      <div id="selected-file" class="info-card hidden"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-modal-close>Zrušit</button>
+        <button type="submit" class="btn-primary">Nahrát a analyzovat</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="pipeline-modal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Upravit kontrolní kroky</h2>
+      <button type="button" class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <form method="post" class="stack-form">
+      <input type="hidden" name="action" value="update_pipeline">
+      {% for step in all_steps %}
+      <label class="custom-step-row">
+        <input type="checkbox" name="pipeline_step_ids" value="{{ step.id }}" {% if step.id in project.pipeline_step_ids %}checked{% endif %}>
+        <span>
+          <strong>{{ step.name }}</strong>
+          <small>{{ step.description }}</small>
+        </span>
+      </label>
+      {% endfor %}
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-modal-close>Zrušit</button>
+        <button type="submit" class="btn-primary">Uložit pipeline</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/project_detail.js') }}"></script>
+{% endblock %}

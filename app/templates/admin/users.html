@@ -1,0 +1,33 @@
+{% extends 'layouts/admin.html' %}
+
+{% block title %}Klonku — Admin uživatelé{% endblock %}
+
+{% block admin_content %}
+<main class="main admin-main">
+  <div class="page-header">
+    <div>
+      <h1>Uživatelé</h1>
+      <p>Přehled účtů, rolí, tierů a měsíčních limitů skenování.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <table class="activity-table">
+      <thead>
+        <tr><th>E-mail</th><th>Role</th><th>Tier</th><th>Využití</th><th>Ověřen</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td><strong>{{ user.email }}</strong><br>{{ user.first_name }} {{ user.last_name }}</td>
+          <td>{{ user.role }}</td>
+          <td>{{ user.tier }}</td>
+          <td>{{ user.monthly_scan_count }} / {{ user.monthly_scan_budget }}</td>
+          <td>{{ 'Ano' if user.email_verified else 'Ne' }}</td>
+          <td><a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn-link">Detail</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}
