@@ -1,6 +1,6 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %}Klonku — Veletržní demo{% endblock %}
+{% block title %}Klonku — Demo analýzy{% endblock %}
 {% block body_class %}demo-body{% endblock %}
 
 {% block shell %}
@@ -9,50 +9,69 @@
   data-demo-total="{{ all_errors|length }}"
   data-demo-step-count="{{ pipeline_steps|length }}"
 >
-  <section class="demo-toolbar">
-    <div class="demo-toolbar-copy">
-      <div class="demo-eyebrow">Klonku</div>
-      <h1>Hledání chyb v práci</h1>
-      <p>{{ project.title }} • {{ project.file_format }} • V{{ version.version_number }}</p>
-      <div class="demo-pipeline-row">
-        {% for step in pipeline_steps %}
-        <span class="feature-chip">{{ step.name }}</span>
-        {% endfor %}
+
+  <!-- ── Topbar ──────────────────────────────────────────── -->
+  <header class="demo-topbar">
+    <div class="demo-topbar-left">
+      <a href="/" class="demo-logo-link">
+        <img src="{{ url_for('static', filename='logo.svg') }}" class="demo-logo-img" alt="Klonku">
+      </a>
+      <div class="demo-topbar-sep"></div>
+      <div class="demo-topbar-doc">
+        <span class="demo-doc-name">{{ project.title }}</span>
+        <span class="demo-doc-badge demo-doc-badge-format">.{{ project.file_format }}</span>
+        <span class="demo-doc-badge demo-doc-badge-version">verze&thinsp;{{ version.version_number }}</span>
       </div>
     </div>
-
-    <div class="demo-toolbar-status">
-      <div class="demo-status-card">
-        <span class="demo-status-label">Stav analýzy</span>
-        <strong id="demo-status-text">Připraveno</strong>
-        <span id="demo-status-step">Spusť analýzu.</span>
-      </div>
-
-      <div class="demo-toolbar-actions">
-        <button type="button" class="btn-secondary" id="demo-reset">Reset</button>
-        <button type="button" class="btn-primary" id="demo-start">Začít analýzu</button>
-      </div>
+    <div class="demo-topbar-status-pill">
+      <span class="demo-status-dot idle" id="demo-status-dot"></span>
+      <strong id="demo-status-text">Připraven ke spuštění</strong>
+      <span id="demo-status-step" class="demo-status-sub" aria-live="polite"></span>
     </div>
-  </section>
+  </header>
 
+  <!-- ── Workspace ──────────────────────────────────────── -->
   <section class="demo-workspace">
-    <div class="demo-document-pane">
-      <div class="demo-pane-header">
-        <div>
-          <strong>Dokument</strong>
-        </div>
-        <div class="demo-counter">
-          <span>Nalezené chyby</span>
-          <strong id="demo-found-count">0</strong>
-        </div>
-      </div>
 
+    <!-- Left: pipeline steps + actions -->
+    <aside class="demo-pipeline-pane demo-pane">
+      <div class="demo-pane-title">Kroky procesu</div>
+      <nav class="demo-steps-nav">
+        {% for step in pipeline_steps %}
+        <button
+          class="demo-step-item demo-cat-chip"
+          data-cat="{{ step.name }}"
+          data-step-index="{{ loop.index0 }}"
+        >
+          <span class="demo-step-num">{{ loop.index }}</span>
+          <span class="demo-step-label">{{ step.name }}</span>
+          <span class="demo-step-indicator" id="demo-step-ind-{{ loop.index0 }}"></span>
+        </button>
+        {% endfor %}
+        <button
+          class="demo-step-item demo-cat-chip"
+          data-cat="Ostatní"
+          data-step-index="{{ pipeline_steps|length }}"
+        >
+          <span class="demo-step-num">{{ pipeline_steps|length + 1 }}</span>
+          <span class="demo-step-label">Ostatní</span>
+          <span class="demo-step-indicator" id="demo-step-ind-{{ pipeline_steps|length }}"></span>
+        </button>
+      </nav>
+      <div class="demo-pipeline-spacer"></div>
+      <div class="demo-pipeline-actions">
+        <button type="button" class="btn-secondary btn-small" id="demo-reset">Reset</button>
+        <button type="button" class="btn-primary btn-small" id="demo-start">Začít analýzu</button>
+      </div>
+    </aside>
+
+    <!-- Center: document -->
+    <div class="demo-document-pane demo-pane">
       <div class="demo-progress-shell" aria-hidden="true">
         <div class="demo-progress-bar">
           <div class="demo-progress-fill" id="demo-progress-fill"></div>
         </div>
       </div>
-
       <div class="demo-scroll demo-document-scroll">
         <div class="md-content demo-document-content">
           {{ document_html|safe }}
@@ -60,22 +79,29 @@
       </div>
     </div>
 
-    <aside class="demo-sidebar-pane">
-      <div class="demo-pane-header demo-pane-header-sidebar">
-        <strong>Nalezené chyby</strong>
+    <!-- Right: found errors -->
+    <aside class="demo-sidebar-pane demo-pane">
+      <div class="demo-sidebar-header">
+        <span class="demo-sidebar-title">Nalezené chyby</span>
+        <span class="demo-found-badge">
+          <strong id="demo-found-count">0</strong>
+        </span>
       </div>
 
       <div class="demo-category-chips" id="demo-category-chips">
-        <button class="demo-cat-chip active" data-cat="all">Zvolit vše</button>
+        <button class="demo-cat-chip demo-cat-all active" data-cat="all">Vše</button>
         {% for group in grouped_errors %}
         <button class="demo-cat-chip" data-cat="{{ group.title }}">{{ group.title }}</button>
         {% endfor %}
+        <button class="demo-cat-chip" data-cat="Ostatní">Ostatní</button>
       </div>
 
       <div class="demo-scroll demo-sidebar-scroll">
         <div class="demo-empty-state" id="demo-empty-state">
-          <h2>Zatím bez nálezů</h2>
-          <p>Spusť analýzu.</p>
+          <svg class="demo-empty-icon" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="28" cy="28" r="23" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4"/>
+            <path d="M20 28h16M28 20v16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
         </div>
 
         <div class="demo-error-list">
@@ -117,10 +143,13 @@
         </div>
       </div>
     </aside>
+
   </section>
 </div>
 {% endblock %}
 
 {% block page_scripts %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="{{ url_for('static', filename='js/demo.js') }}"></script>
 {% endblock %}
